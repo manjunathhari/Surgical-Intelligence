@@ -321,7 +321,7 @@ fn run() -> Result<(), Box<dyn Error>> {
                         }).collect(),
                         amendments,
                         added_after_seal: learning.added_after_seal,
-                        sealed_at,
+                        sealed_at: sealed_at.clone(),
                         provenance: si_core::Provenance {
                             source_type: "surgical_registry_my_experience".into(),
                             source_id: None,
