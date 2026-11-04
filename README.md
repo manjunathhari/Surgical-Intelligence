@@ -16,7 +16,7 @@ The first local engine should:
 5. Retrieve relevant knowledge and explain why it matched.
 6. Export and restore its complete learned state on another machine.
 
-## Principles
+## Primary knowledge sources\n\nSurgical Intelligence accumulates knowledge from four first-class sources: structured surgeon learning (including original slots and later amendments), operative images and video (including frame/time-anchored annotations), papers deliberately retained by the user (including extracted and traceable evidence claims), and de-identified case/procedure/outcome data. These sources are connected in one portable knowledge graph. Text, image and video embeddings are replaceable retrieval indexes derived from those sources; they are never the canonical knowledge store.\n\nSee [Source Knowledge Model](docs/SOURCE_KNOWLEDGE_MODEL.md) for the multimodal source model and implementation sequence.\n\n## Principles
 
 - **Model-independent core:** no LLM or hosted model is required for core state management.
 - **Portable state:** knowledge is a versioned data contract, not opaque model weights.
