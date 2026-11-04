@@ -11,7 +11,7 @@ M1 introduces a unified v2 portable state while retaining the original assertion
 - Migration dispatch: `crates/si-core/src/migration.rs`
 - CLI: `si migrate`, `si import-registry`
 
-The v2 envelope contains a graph (typed nodes and edges), source-artifact manifests, publication records, append-only event payloads, embedding profiles and namespaced extensions. It has no mandatory database, model, vector store or object-store dependency.
+The v2 envelope contains a graph (typed nodes and edges), typed My Experience learning records with original slots and amendments, source-artifact manifests, publication records and traceable evidence claims, append-only event payloads, embedding profiles and namespaced extensions. It has no mandatory database, model, vector store or object-store dependency.
 
 ## Canonical vs derived
 
@@ -64,7 +64,7 @@ The JSON Schema is the interchange contract. Runtime validation adds graph-wide 
 
 - The registry exporter itself is not implemented in the source registry. Use synthetic fixtures until its privacy, purpose authorization and media-export controls are implemented and reviewed.
 - Existing registry graph v1 is migrated as graph nodes/edges; source-specific provenance already present in the graph is preserved.
-- Existing My Experience learning data remains in its structured graph payload, but richer first-class typed learning/publication/media ingestion adapters are future M1 completion work.
+- Registry My Experience records are additionally mapped into typed learning records, retaining slot names, text, origin, sign tags, shown-by media type, seal time and amendments. The registry exporter still needs to supply approved media asset references before the adapter can populate actual image/video manifests.
 - Media bytes are not bundled by this first implementation.
 - v1 memory event payloads are preserved, but event-specific migration into a typed v2 event enum is deferred to M2.
 - No neural model is trained or required to read/write v2.
