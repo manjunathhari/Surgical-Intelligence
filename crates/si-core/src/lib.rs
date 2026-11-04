@@ -8,7 +8,7 @@ mod memory;
 mod portability;
 
 pub use memory::{
-    Assertion, AssertionStatus, EpistemicStatus, MemoryEvent, MemoryState,
-    Provenance, RetentionClass,
+    Assertion, AssertionStatus, EpistemicStatus, MemoryEvent, MemoryState, Provenance,
+    RetentionClass,
 };
 pub use portability::{PortableEnvelope, PORTABLE_FORMAT, PORTABLE_VERSION};
