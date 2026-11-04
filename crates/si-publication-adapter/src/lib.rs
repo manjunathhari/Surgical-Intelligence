@@ -153,7 +153,7 @@ pub fn map_publications(input: &PublicationImport, state: &mut PortableStateV2) 
             title: paper.title.clone(), authors: paper.authors.clone(), journal: paper.journal.clone(),
             publication_year: paper.publication_year, version: paper.version.clone(),
             retention_state: paper.retention_state.clone(), retained_by: input.retained_by.clone(),
-            decision_at: paper.decision_at.as_deref().map(DateTime::parse_from_rfc3339).transpose()
+            decision_at: paper.decision_at.as_deref().map(|value| DateTime::parse_from_rfc3339(value)).transpose()
                 .map_err(|e| format!("invalid publication decision timestamp: {e}"))?.map(|d| d.with_timezone(&Utc)),
             source_artifact_id: artifact_id, provenance: paper_provenance.clone(),
         });
