@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/si-core", "crates/si-cli", "crates/si-registry-adapter", "crates/si-publication-adapter"]
+members = ["crates/si-core", "crates/si-cli", "crates/si-registry-adapter", "crates/si-publication-adapter", "crates/si-api"]
 
 [workspace.package]
 version = "0.1.0"
