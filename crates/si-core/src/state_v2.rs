@@ -268,7 +268,7 @@ impl PortableStateV2 {
                 return Err(format!("node {} has invalid lifecycle status", node.id));
             }
             if let Some(c) = node.confidence { if !c.is_finite() || !(0.0..=1.0).contains(&c) { return Err(format!("node {} has invalid confidence", node.id)); } }
-            if let (Some(a),Some(b)) = (node.temporal.valid_from,node.temporal.valid_until) { if b<a { return Err(format!("node {} has invalid validity interval", node.id)); } }
+            if let (Some(a),Some(b)) = (&node.temporal.valid_from,&node.temporal.valid_until) { if b<a { return Err(format!("node {} has invalid validity interval", node.id)); } }
         }
         let mut edge_ids = HashSet::new();
         for edge in &self.graph.edges {
@@ -351,7 +351,7 @@ pub fn migrate_memory_v1(input: &str) -> Result<PortableStateV2, String> {
             lifecycle_status: format!("{:?}", assertion.status).to_lowercase(),
             retention: format!("{:?}", assertion.retention).to_lowercase(),
             provenance: assertion.provenance.clone(),
-            temporal: Temporal { observed_at: assertion.observed_at, valid_from: assertion.valid_from, valid_until: assertion.valid_until },
+            temporal: Temporal { observed_at: assertion.observed_at.clone(), valid_from: assertion.valid_from.clone(), valid_until: assertion.valid_until.clone() },
             review: ReviewState { state: "not_required".into(), reviewer_ref: None, reviewed_at: None, rationale: None },
             data: serde_json::json!({"subject":assertion.subject,"predicate":assertion.predicate,"object":assertion.object,"statement":assertion.statement}),
             tags: assertion.tags.clone(),
