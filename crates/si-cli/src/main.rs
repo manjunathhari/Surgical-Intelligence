@@ -6,14 +6,17 @@ use si_core::{
 };
 use std::{
     error::Error,
-    fs,
-    io,
+    fs, io,
     path::{Path, PathBuf},
 };
 use uuid::Uuid;
 
 #[derive(Debug, Parser)]
-#[command(name = "si", version, about = "Portable local memory engine for Surgical Intelligence")]
+#[command(
+    name = "si",
+    version,
+    about = "Portable local memory engine for Surgical Intelligence"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -42,11 +45,11 @@ enum Commands {
         source_type: String,
         #[arg(long)]
         source_id: Option<String>,
-        #[arg(long, value_enum, default_value_t = EpistemicArg::Reported)]
+        #[arg(long, value_enum, default_value = "reported")]
         epistemic_status: EpistemicArg,
         #[arg(long)]
         confidence: Option<f32>,
-        #[arg(long, value_enum, default_value_t = RetentionArg::Durable)]
+        #[arg(long, value_enum, default_value = "durable")]
         retention: RetentionArg,
         /// Repeat --tag to attach multiple tags.
         #[arg(long)]
@@ -120,7 +123,8 @@ fn invalid_data(message: impl Into<String>) -> io::Error {
 
 fn load_store(path: &Path) -> Result<PortableEnvelope, Box<dyn Error>> {
     let input = fs::read_to_string(path)?;
-    PortableEnvelope::from_json(&input).map_err(invalid_data.into)
+    let envelope = PortableEnvelope::from_json(&input).map_err(invalid_data)?;
+    Ok(envelope)
 }
 
 fn write_store(path: &Path, envelope: &PortableEnvelope) -> Result<(), Box<dyn Error>> {
@@ -157,11 +161,9 @@ fn run() -> Result<(), Box<dyn Error>> {
     match Cli::parse().command {
         Commands::Init { store } => {
             if store.exists() {
-                return Err(invalid_data(format!(
-                    "store already exists: {}",
-                    store.display()
-                ))
-                .into());
+                return Err(
+                    invalid_data(format!("store already exists: {}", store.display())).into(),
+                );
             }
             write_store(&store, &PortableEnvelope::new(MemoryState::new()))?;
             println!("Initialised {}", store.display());
@@ -227,7 +229,11 @@ fn run() -> Result<(), Box<dyn Error>> {
         Commands::Export { store, output } => {
             let envelope = load_store(&store)?;
             write_store(&output, &envelope)?;
-            println!("Exported {} assertions to {}", envelope.state.assertions.len(), output.display());
+            println!(
+                "Exported {} assertions to {}",
+                envelope.state.assertions.len(),
+                output.display()
+            );
         }
         Commands::Import { input, store } => {
             if store.exists() {
@@ -239,7 +245,11 @@ fn run() -> Result<(), Box<dyn Error>> {
             }
             let envelope = load_store(&input)?;
             write_store(&store, &envelope)?;
-            println!("Imported {} assertions to {}", envelope.state.assertions.len(), store.display());
+            println!(
+                "Imported {} assertions to {}",
+                envelope.state.assertions.len(),
+                store.display()
+            );
         }
     }
     Ok(())
