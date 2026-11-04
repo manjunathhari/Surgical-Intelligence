@@ -80,6 +80,8 @@ pytest
 - [x] Define versioned portable state envelope.
 - [x] Add deterministic in-memory insertion and export/import.
 - [ ] Add merge and contradiction-resolution policies.
+- [x] Define portable surgical knowledge-graph interchange schema.
+- [ ] Implement Rust graph types, integrity validation, and round-trip tests.
 
 ### M1 — Memory engine
 - Add source provenance and event history.
@@ -100,7 +102,7 @@ pytest
 
 The registry remains a separate system of record. Surgical Intelligence should consume explicit, permissioned, appropriately de-identified exports or events. Its core must not depend on a registry's database schema.
 
-See [Architecture](docs/ARCHITECTURE.md), [Memory model](docs/MEMORY_MODEL.md), [Portability](docs/PORTABILITY.md), [CLI usage](docs/CLI.md), and [Safety & Privacy](docs/SAFETY_AND_PRIVACY.md).
+See [Architecture](docs/ARCHITECTURE.md), [Memory model](docs/MEMORY_MODEL.md), [Knowledge graph](docs/KNOWLEDGE_GRAPH.md), [Portability](docs/PORTABILITY.md), [CLI usage](docs/CLI.md), and [Safety & Privacy](docs/SAFETY_AND_PRIVACY.md).
 
 ## Local CLI
 
