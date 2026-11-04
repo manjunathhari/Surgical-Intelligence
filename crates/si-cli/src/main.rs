@@ -1,6 +1,6 @@
 use chrono::Utc;
 use clap::{Parser, Subcommand, ValueEnum};
-use si_registry_adapter::{map_registry_export, RegistryExport};
+use si_registry_adapter::{map_registry_export, map_registry_media_assets, RegistryExport};
 use si_core::{
     migrate_to_v2, LearningAmendment, LearningRecord, LearningSlot, PortableStateV2, Assertion, AssertionStatus, EpistemicStatus, MemoryState, PortableEnvelope, Provenance,
     RetentionClass,
@@ -351,6 +351,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             let mut state = PortableStateV2::from_graph_values(
                 graph.graph.nodes, graph.graph.edges, "surgical-registry", &graph.exported_at
             ).map_err(invalid_data)?;
+            map_registry_media_assets(&registry_export, &mut state).map_err(invalid_data)?;
             for case in &registry_export.cases {
                 let episode_id = Uuid::new_v5(
                     &Uuid::NAMESPACE_URL,
