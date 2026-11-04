@@ -377,6 +377,12 @@ pub fn map_registry_media_assets(export: &RegistryExport, state: &mut PortableSt
         for asset in &case.media_assets {
             validate_media_asset(asset, &case.source_case_ref)?;
             let id = Uuid::new_v5(&Uuid::NAMESPACE_URL, format!("surgical-registry:{}:media:{}", case.source_case_ref, asset.asset_ref).as_bytes());
+            let source_node_id = if let Some(ordinal) = asset.learning_ordinal {
+                if !case.learnings.iter().any(|learning| learning.ordinal == ordinal) {
+                    return Err(format!("media asset {} references missing learning ordinal {}", asset.asset_ref, ordinal));
+                }
+                Uuid::new_v5(&Uuid::NAMESPACE_URL, format!("surgical-registry:{}:learning:{}:reflection", case.source_case_ref, ordinal).as_bytes())
+            } else { episode_id };
             let observed_at = asset.captured_at.as_deref().unwrap_or(&export.exported_at);
             let imported_at = DateTime::parse_from_rfc3339(&export.exported_at).map_err(|e| format!("invalid export timestamp: {e}"))?.with_timezone(&Utc);
             let mut metadata = asset.metadata.clone();
@@ -392,7 +398,7 @@ pub fn map_registry_media_assets(export: &RegistryExport, state: &mut PortableSt
                 byte_length: Some(asset.byte_length),
                 availability: "available".into(),
                 storage_ref: Some(asset.storage_ref.clone()),
-                source_node_id: Some(episode_id),
+                source_node_id: Some(source_node_id),
                 parent_artifact_id: None,
                 frame_start_ms: asset.frame_start_ms,
                 frame_end_ms: asset.frame_end_ms,
