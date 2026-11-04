@@ -56,6 +56,26 @@ pub struct RegistryCase {
     pub media_assets: Vec<RegistryMediaAsset>,
 }
 
+/// Approved media manifest entry exported by the trusted registry boundary.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RegistryMediaAsset {
+    pub asset_ref: String,
+    pub parent_asset_ref: Option<String>,
+    pub modality: String,
+    pub media_type: Option<String>,
+    pub mime_type: Option<String>,
+    pub sha256: String,
+    pub byte_length: u64,
+    pub storage_ref: String,
+    pub learning_ordinal: Option<u8>,
+    pub frame_start_ms: Option<u64>,
+    pub frame_end_ms: Option<u64>,
+    pub captured_at: Option<String>,
+    pub export_authorized: bool,
+    #[serde(default)]
+    pub metadata: BTreeMap<String, Value>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RegistryFieldValue {
     pub field: String,
