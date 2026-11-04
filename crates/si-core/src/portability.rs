@@ -24,8 +24,10 @@ impl PortableEnvelope {
         }
     }
 
-    pub fn to_json(&self) -> Result<String, serde_json::Error> {
+    pub fn to_json(&self) -> Result<String, String> {
+        self.state.validate()?;
         serde_json::to_string_pretty(self)
+            .map_err(|err| format!("could not serialize portable envelope: {err}"))
     }
 
     pub fn from_json(input: &str) -> Result<Self, String> {
@@ -35,8 +37,14 @@ impl PortableEnvelope {
             return Err(format!("unsupported format: {}", envelope.format));
         }
         if envelope.version != PORTABLE_VERSION {
-            return Err(format!("unsupported portable version: {}", envelope.version));
+            return Err(format!(
+                "unsupported portable version: {}",
+                envelope.version
+            ));
         }
+        chrono::DateTime::parse_from_rfc3339(&envelope.exported_at)
+            .map_err(|err| format!("invalid exported_at timestamp: {err}"))?;
+        envelope.state.validate()?;
         Ok(envelope)
     }
 }
@@ -58,6 +66,12 @@ mod tests {
     #[test]
     fn rejects_unknown_version() {
         let input = r#"{"format":"surgical-intelligence-memory","version":99,"exported_at":"2026-01-01T00:00:00Z","state":{"assertions":{},"events":[]}}"#;
+        assert!(PortableEnvelope::from_json(input).is_err());
+    }
+
+    #[test]
+    fn rejects_state_with_dangling_event() {
+        let input = r#"{"format":"surgical-intelligence-memory","version":1,"exported_at":"2026-01-01T00:00:00Z","state":{"assertions":{},"events":[{"event_type":"assertion_added","event_id":"d9428888-122b-4f45-82d2-b6a64f99c243","assertion_id":"7d444840-9dc0-4a47-a99d-6d9f834f45c8","occurred_at":"2026-01-01T00:00:00Z"}]}}"#;
         assert!(PortableEnvelope::from_json(input).is_err());
     }
 }
