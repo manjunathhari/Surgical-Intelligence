@@ -74,29 +74,20 @@ pytest
 
 ## Roadmap
 
-### M0 — Foundation
-- [x] Define boundaries and principles.
-- [x] Establish Rust workspace and initial domain model.
-- [x] Define versioned portable state envelope.
-- [x] Add deterministic in-memory insertion and export/import.
-- [ ] Add merge and contradiction-resolution policies.
-- [x] Define portable surgical knowledge-graph interchange schema.
-- [ ] Implement Rust graph types, integrity validation, and round-trip tests.
+### M1 — Portable memory schema and versioning
+- [ ] Unified versioned state envelope for assertions, graph, learning records, papers, media manifests and provenance.
+- [ ] Explicit v1-to-v2 migration; preserve old v1 readers and fixtures.
+- [ ] Rust validation, stable identity, checksums and round-trip portability.
+- [ ] CLI migration, inspection, import and export.
 
-### M1 — Memory engine
-- Add source provenance and event history.
-- Track updates, supersession, and temporal validity.
-- Add explainable lexical and metadata retrieval.
+### M2 — Memory learning and update engine
+- [ ] Append-only, idempotent event/update engine.
+- [ ] Preserve amendments, contradictions, corroboration and supersession.
+- [ ] Human review gates for clinical interpretation and reusable principles.
+- [ ] Rebuildable derived summaries and embeddings.
+- [ ] Python evaluation for fidelity, temporal consistency, conflict preservation and portability.
 
-### M2 — Evaluation
-- Synthetic and de-identified benchmarks.
-- Measure ingestion fidelity, retrieval relevance, update correctness, and portability.
-- Test performance and state growth.
-
-### M3 — Adapters
-- Registry adapter.
-- Dictation/conversation adapter.
-- Optional embedding and LLM adapters.
+See [M1 and M2 delivery plan](docs/MILESTONES_M1_M2.md) for detailed deliverables and acceptance criteria.
 
 ## Scope boundary
 
