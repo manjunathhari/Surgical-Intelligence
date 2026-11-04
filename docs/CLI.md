@@ -85,3 +85,21 @@ si export-state --input ./data/state-v2.json --output ./exports/state-v2.json
 ```
 
 All v2 commands validate before writing or reporting. Initialisation and export refuse to overwrite existing files. `inspect-state` prints counts and manifest metadata, not patient-level content.
+
+
+## Source adapters and portable bundles
+
+Import the user's explicitly retained publication library (metadata, retained full-text file references and structured evidence claims) into a v2 state:
+
+```bash
+si import-publications --input ./publication-import.json --state ./state-v2.json --output ./state-with-papers.json
+```
+
+Package all available media and paper files into a portable directory, verifying actual byte length and SHA-256 before copying:
+
+```bash
+si package-bundle --state ./state-with-papers.json --source-root ./source-export --output-root ./SurgicalIntelligenceBundle
+si verify-bundle --state ./SurgicalIntelligenceBundle/state-v2.json --bundle-root ./SurgicalIntelligenceBundle
+```
+
+See [M1 source adapters](M1_SOURCE_ADAPTERS.md) for the registry media contract, publication import schema, privacy boundary and example payload.
