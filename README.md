@@ -100,4 +100,14 @@ pytest
 
 The registry remains a separate system of record. Surgical Intelligence should consume explicit, permissioned, appropriately de-identified exports or events. Its core must not depend on a registry's database schema.
 
-See [Architecture](docs/ARCHITECTURE.md), [Memory model](docs/MEMORY_MODEL.md), and [Portability](docs/PORTABILITY.md).
+See [Architecture](docs/ARCHITECTURE.md), [Memory model](docs/MEMORY_MODEL.md), [Portability](docs/PORTABILITY.md), [CLI usage](docs/CLI.md), and [Safety & Privacy](docs/SAFETY_AND_PRIVACY.md).
+
+## Local CLI
+
+The first terminal interface is available through the `si` binary:
+
+```bash
+cargo run --release -p si-cli -- init --store ./data/surgical-memory.json
+```
+
+See [CLI usage](docs/CLI.md) for adding assertions, validating, exporting, and importing.
