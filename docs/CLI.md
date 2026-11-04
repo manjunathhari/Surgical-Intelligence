@@ -55,3 +55,21 @@ Import validates the envelope and refuses to overwrite an existing target store.
 ## Import a Surgical Registry export\n\nThe registry adapter is a separate offline crate. The source registry must first create a surgeon-authorized, de-identified JSON export using the contract in [Registry export contract](REGISTRY_EXPORT_CONTRACT.md). Then run:\n\n```bash\nsi import-registry --input ./exports/registry-export.json --output ./data/registry-knowledge-graph.json\n```\n\nThe importer validates the source format, authorization flag, saved/sealed case state, and identifiers in the contract. It writes a portable knowledge-graph envelope and refuses to overwrite an existing output. Node and edge IDs are deterministic for the same pseudonymous source records, so the same export does not create new IDs on each import.\n\nThe import command does not connect to Supabase and does not de-identify raw patient data. Do not run it on an export that has not passed the registry-side privacy and authorization workflow.\n\n## Current limitation
 
 The CLI accepts **structured assertions**. It does not yet convert free-form dictation or conversations into assertions. That extraction layer will be an adapter with review and validation, not hidden inside the deterministic core.
+
+
+## Unified v2 migration
+
+Migrate either a v1 assertion-memory envelope or the legacy v1 registry graph envelope into the unified portable state:
+
+```bash
+si migrate --input ./old-memory-or-graph.json --output ./state-v2.json
+```
+
+The command validates the input, preserves legacy assertion IDs and event payloads, validates the v2 result, and refuses to overwrite an existing output. The v2 envelope is described by `schemas/state-v2.schema.json`.
+
+`si import-registry` now emits the unified v2 state rather than the earlier standalone graph envelope:
+
+```bash
+si import-registry --input ./exports/registry-export.json --output ./data/registry-state-v2.json
+```
+
