@@ -75,10 +75,11 @@ pytest
 ## Roadmap
 
 ### M1 — Portable memory schema and versioning
-- [ ] Unified versioned state envelope for assertions, graph, learning records, papers, media manifests and provenance.
-- [ ] Explicit v1-to-v2 migration; preserve old v1 readers and fixtures.
-- [ ] Rust validation, stable identity, checksums and round-trip portability.
-- [ ] CLI migration, inspection, import and export.
+- [x] Unified v2 state envelope for graph nodes/edges, source-artifact manifests, publications, events, embedding profiles and extensions.
+- [x] Preserve the v1 assertion-memory reader and add explicit v1 memory/legacy graph migration.
+- [x] Rust validation for graph references, identity, checksums, temporal ranges and source links.
+- [x] CLI migration and v2 registry import; JSON Schema and implementation documentation.
+- [ ] Full M1 acceptance: CI green, cross-platform round-trip fixtures, media bundle verification and first-class learning/media/publication import adapters.
 
 ### M2 — Memory learning and update engine
 - [ ] Append-only, idempotent event/update engine.
