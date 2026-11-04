@@ -137,7 +137,7 @@ pub fn map_publications(input: &PublicationImport, state: &mut PortableStateV2) 
                 parent_artifact_id: None,
                 frame_start_ms: None,
                 frame_end_ms: None,
-                imported_at: exported_at,
+                imported_at: exported_at.clone(),
                 provenance: Provenance {
                     source_type: input.source_system.clone(),
                     source_id: Some(paper.source_ref.clone()),
