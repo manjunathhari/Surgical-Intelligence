@@ -89,3 +89,12 @@ The portable schema, core types, migration path, CLI and validation tests are im
 - Add cross-platform fixture runs on Windows/macOS in addition to the Linux CI runner.
 
 These are deliberately not faked by the core: the registry remains the system of record, and patient media must not be exported until its purpose authorization and privacy workflow is in place.
+
+
+## Source adapter completion
+
+The workspace now includes the registry media manifest mapper, a retained-publication importer for bibliographic metadata and separately structured evidence claims, and portable directory bundle packaging/verification. Bundle commands verify actual file bytes against declared byte length and SHA-256. See `docs/M1_SOURCE_ADAPTERS.md` for the import contracts and commands.
+
+The registry export remains backward-compatible: `media_assets` is optional in the existing v1 export format. A trusted exporter in the source registry must populate it only after applying the required export-purpose and authorization checks. This repository does not connect to the registry database or bypass its access controls.
+
+The publication importer accepts a user-authorized export of already-retained papers. It does not fetch paywalled content or manufacture evidence claims from a PDF; claim review state is preserved as supplied.
