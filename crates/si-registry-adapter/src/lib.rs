@@ -184,6 +184,7 @@ fn source_time(exported_at: &str, candidate: Option<&str>) -> String {
         .unwrap_or_else(|| exported_at.to_string())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn node(
     id: Uuid,
     kind: &str,
