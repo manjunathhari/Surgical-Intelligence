@@ -72,7 +72,7 @@ fn stable_id(key: &str) -> Uuid {
 fn safe_relative_path(raw: &str) -> bool {
     let path = std::path::Path::new(raw);
     !raw.trim().is_empty()
-        && !path.is_absolute()
+        && !raw.contains('\\\\') && !raw.contains(':')\n        && !path.is_absolute()
         && !path.components().any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir | std::path::Component::Prefix(_)))
         && !raw.contains("://") && !raw.contains('?') && !raw.contains('#')
 }
@@ -214,6 +214,28 @@ mod tests {
         assert_eq!(state.evidence_claims.len(),1);
         assert_eq!(state.evidence_claims[0].publication_id,state.publications[0].id);
     }
+    #[test]
+    fn retained_full_text_becomes_a_document_artifact() {
+        let bytes=b"synthetic full text";
+        let input=PublicationImport {
+            format:PUBLICATION_IMPORT_FORMAT.into(), version:1, exported_at:"2026-11-04T00:00:00Z".into(),
+            source_system:"local-paper-library".into(), retained_by:None,
+            papers:vec![ImportedPaper {
+                source_ref:"paper-file-1".into(), doi:None, pmid:Some("12345".into()), pmcid:None,
+                title:"Synthetic paper with file".into(), authors:vec![], journal:None, publication_year:None,
+                version:None, retention_state:"kept".into(), decision_at:None,
+                file:Some(RetainedFile { storage_ref:"papers/12345/fulltext.pdf".into(), mime_type:"application/pdf".into(),
+                    sha256:hex::encode(Sha256::digest(bytes)), byte_length:bytes.len() as u64, export_authorized:true }),
+                claims:vec![]
+            }]
+        };
+        let mut state=PortableStateV2::empty();
+        map_publications(&input,&mut state).unwrap();
+        assert_eq!(state.source_artifacts.len(),1);
+        assert_eq!(state.source_artifacts[0].modality,"document");
+        assert_eq!(state.publications[0].source_artifact_id,Some(state.source_artifacts[0].id));
+    }
+
     #[test]
     fn verifies_media_bytes_by_length_and_checksum() {
         let bytes=b"synthetic pdf";
