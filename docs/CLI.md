@@ -73,3 +73,15 @@ The command validates the input, preserves legacy assertion IDs and event payloa
 si import-registry --input ./exports/registry-export.json --output ./data/registry-state-v2.json
 ```
 
+
+
+## Unified v2 state commands
+
+```bash
+si init-state --output ./data/state-v2.json
+si validate-state --input ./data/state-v2.json
+si inspect-state --input ./data/state-v2.json
+si export-state --input ./data/state-v2.json --output ./exports/state-v2.json
+```
+
+All v2 commands validate before writing or reporting. Initialisation and export refuse to overwrite existing files. `inspect-state` prints counts and manifest metadata, not patient-level content.
