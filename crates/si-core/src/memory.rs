@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use uuid::Uuid;
 
 /// How strongly an assertion is grounded. This is not a calibrated probability.
@@ -69,7 +69,10 @@ impl Assertion {
             ("predicate", self.predicate.as_str()),
             ("object", self.object.as_str()),
             ("statement", self.statement.as_str()),
-            ("provenance.source_type", self.provenance.source_type.as_str()),
+            (
+                "provenance.source_type",
+                self.provenance.source_type.as_str(),
+            ),
         ] {
             if value.trim().is_empty() {
                 return Err(format!("{field} must not be empty"));
@@ -118,6 +121,51 @@ impl MemoryState {
         Self::default()
     }
 
+    /// Validate deserialized or externally constructed state before it is trusted.
+    pub fn validate(&self) -> Result<(), String> {
+        for (key, assertion) in &self.assertions {
+            if *key != assertion.id {
+                return Err(format!(
+                    "assertion map key {key} does not match embedded id {}",
+                    assertion.id
+                ));
+            }
+            assertion.validate()?;
+        }
+
+        let mut event_ids = HashSet::new();
+        for event in &self.events {
+            let (event_id, assertion_id) = match event {
+                MemoryEvent::AssertionAdded {
+                    event_id,
+                    assertion_id,
+                    ..
+                } => (*event_id, *assertion_id),
+                MemoryEvent::AssertionStatusChanged {
+                    event_id,
+                    assertion_id,
+                    reason,
+                    ..
+                } => {
+                    if reason.trim().is_empty() {
+                        return Err("status-change event reason must not be empty".into());
+                    }
+                    (*event_id, *assertion_id)
+                }
+            };
+
+            if !event_ids.insert(event_id) {
+                return Err(format!("duplicate event id {event_id}"));
+            }
+            if !self.assertions.contains_key(&assertion_id) {
+                return Err(format!(
+                    "event {event_id} references missing assertion {assertion_id}"
+                ));
+            }
+        }
+        Ok(())
+    }
+
     pub fn add_assertion(&mut self, assertion: Assertion) -> Result<(), String> {
         assertion.validate()?;
         if self.assertions.contains_key(&assertion.id) {
@@ -140,7 +188,9 @@ impl MemoryState {
         new_status: AssertionStatus,
         reason: impl Into<String>,
     ) -> Result<(), String> {
-        let assertion = self.assertions.get_mut(&id)
+        let assertion = self
+            .assertions
+            .get_mut(&id)
             .ok_or_else(|| format!("assertion {id} not found"))?;
         let previous = assertion.status;
         if previous == new_status {
@@ -198,6 +248,7 @@ mod tests {
         state.add_assertion(assertion()).unwrap();
         assert_eq!(state.assertions.len(), 1);
         assert_eq!(state.events.len(), 1);
+        assert!(state.validate().is_ok());
     }
 
     #[test]
@@ -213,8 +264,11 @@ mod tests {
         let item = assertion();
         let id = item.id;
         state.add_assertion(item).unwrap();
-        state.change_status(id, AssertionStatus::Disputed, "conflicting evidence").unwrap();
+        state
+            .change_status(id, AssertionStatus::Disputed, "conflicting evidence")
+            .unwrap();
         assert_eq!(state.assertions[&id].status, AssertionStatus::Disputed);
         assert_eq!(state.events.len(), 2);
+        assert!(state.validate().is_ok());
     }
 }
