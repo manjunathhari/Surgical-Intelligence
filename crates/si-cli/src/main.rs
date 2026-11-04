@@ -1,5 +1,6 @@
 use chrono::Utc;
 use clap::{Parser, Subcommand, ValueEnum};
+use si_registry_adapter::{map_registry_export, RegistryExport};
 use si_core::{
     Assertion, AssertionStatus, EpistemicStatus, MemoryState, PortableEnvelope, Provenance,
     RetentionClass,
@@ -72,7 +73,14 @@ enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-    /// Import a validated portable file as the target store.
+    /// Import a de-identified Surgical Registry export as a portable knowledge graph.
+    ImportRegistry {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Import a validated portable assertion-memory file as the target store.
     Import {
         #[arg(long)]
         input: PathBuf,
@@ -232,6 +240,37 @@ fn run() -> Result<(), Box<dyn Error>> {
             println!(
                 "Exported {} assertions to {}",
                 envelope.state.assertions.len(),
+                output.display()
+            );
+        }
+        Commands::ImportRegistry { input, output } => {
+            if output.exists() {
+                return Err(invalid_data(format!(
+                    "output already exists: {}",
+                    output.display()
+                )).into());
+            }
+            let input_text = fs::read_to_string(&input)?;
+            let registry_export: RegistryExport =
+                serde_json::from_str(&input_text).map_err(invalid_data)?;
+            let graph = map_registry_export(&registry_export).map_err(invalid_data)?;
+            let json = serde_json::to_string_pretty(&graph)?;
+            if let Some(parent) = output.parent() {
+                if !parent.as_os_str().is_empty() {
+                    fs::create_dir_all(parent)?;
+                }
+            }
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&output)?;
+            use std::io::Write;
+            file.write_all(json.as_bytes())?;
+            println!(
+                "Imported {} registry cases as {} graph nodes and {} edges to {}",
+                registry_export.cases.len(),
+                graph.graph.nodes.len(),
+                graph.graph.edges.len(),
                 output.display()
             );
         }
