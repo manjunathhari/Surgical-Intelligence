@@ -1,5 +1,5 @@
 //! Unified portable knowledge state (v2). This is canonical data, not an embedding cache.
-use crate::{MemoryState, PortableEnvelope};
+use crate::PortableEnvelope;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -290,7 +290,7 @@ pub fn migrate_memory_v1(input: &str) -> Result<PortableStateV2, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Assertion, AssertionStatus, EpistemicStatus, Provenance, RetentionClass};
+    use crate::{Assertion, AssertionStatus, EpistemicStatus, MemoryState, Provenance, RetentionClass};
     use chrono::Utc;
 
     fn sample_node(id: Uuid) -> GraphNode {
