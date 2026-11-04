@@ -1,0 +1,17 @@
+[package]
+name = "si-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Local command-line interface for Surgical Intelligence memory stores"
+
+[[bin]]
+name = "si"
+path = "src/main.rs"
+
+[dependencies]
+chrono = "0.4"
+clap = { version = "4", features = ["derive"] }
+serde_json = "1"
+si-core = { path = "../si-core" }
+uuid = { version = "1", features = ["v4"] }
