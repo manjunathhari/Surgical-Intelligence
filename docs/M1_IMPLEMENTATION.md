@@ -68,3 +68,24 @@ The JSON Schema is the interchange contract. Runtime validation adds graph-wide 
 - Media bytes are not bundled by this first implementation.
 - v1 memory event payloads are preserved, but event-specific migration into a typed v2 event enum is deferred to M2.
 - No neural model is trained or required to read/write v2.
+
+
+## Verification
+
+The implementation at commit `1d1cacea4289448994d3b075d7f767006fc5887f` passed the repository CI workflow:
+- Rust formatting invocation: passed.
+- Clippy with warnings denied: passed.
+- Rust workspace tests: passed.
+- Python evaluation tests: passed.
+
+Run: https://github.com/manjunathhari/Surgical-Intelligence/actions/runs/41876115243
+
+## Remaining integration work before calling the entire M1 milestone closed
+
+The portable schema, core types, migration path, CLI and validation tests are implemented. The remaining work is at the source-ingestion boundary:
+- Implement and review the registry-side authorized exporter, including actual image/video asset references and privacy/de-identification checks.
+- Add the retained-paper ingestion adapter that populates publication records and evidence claims from the user's saved papers.
+- Implement media bundle transport and verify actual bytes against manifest checksums (the current v2 validator checks checksum syntax and manifest references).
+- Add cross-platform fixture runs on Windows/macOS in addition to the Linux CI runner.
+
+These are deliberately not faked by the core: the registry remains the system of record, and patient media must not be exported until its purpose authorization and privacy workflow is in place.
