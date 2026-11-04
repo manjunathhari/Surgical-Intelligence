@@ -17,7 +17,7 @@ pub use portability::{PortableEnvelope, PORTABLE_FORMAT, PORTABLE_VERSION};
 
 pub use migration::migrate_to_v2;
 pub use state_v2::{
-    migrate_memory_v1, EmbeddingProfile, GraphEdge, GraphNode, KnowledgeGraph as PortableKnowledgeGraph,
+    migrate_memory_v1, EmbeddingProfile, EvidenceClaim, GraphEdge, GraphNode, KnowledgeGraph as PortableKnowledgeGraph, LearningAmendment, LearningRecord, LearningSlot,
     PortableStateV2, PublicationRecord, ReviewState, SourceArtifact, StateManifest, Temporal,
     STATE_FORMAT_V2, STATE_VERSION_V2,
 };
