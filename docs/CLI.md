@@ -52,6 +52,6 @@ si import --input ./backup/portable-memory.json --store ./restored/surgical-memo
 
 Import validates the envelope and refuses to overwrite an existing target store. Keep exported files in approved secure storage; the format is portable, not encrypted.
 
-## Current limitation
+## Import a Surgical Registry export\n\nThe registry adapter is a separate offline crate. The source registry must first create a surgeon-authorized, de-identified JSON export using the contract in [Registry export contract](REGISTRY_EXPORT_CONTRACT.md). Then run:\n\n```bash\nsi import-registry --input ./exports/registry-export.json --output ./data/registry-knowledge-graph.json\n```\n\nThe importer validates the source format, authorization flag, saved/sealed case state, and identifiers in the contract. It writes a portable knowledge-graph envelope and refuses to overwrite an existing output. Node and edge IDs are deterministic for the same pseudonymous source records, so the same export does not create new IDs on each import.\n\nThe import command does not connect to Supabase and does not de-identify raw patient data. Do not run it on an export that has not passed the registry-side privacy and authorization workflow.\n\n## Current limitation
 
 The CLI accepts **structured assertions**. It does not yet convert free-form dictation or conversations into assertions. That extraction layer will be an adapter with review and validation, not hidden inside the deterministic core.
