@@ -73,6 +73,28 @@ enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Create a new empty unified v2 state.
+    InitState {
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Validate a unified v2 state file.
+    ValidateState {
+        #[arg(long)]
+        input: PathBuf,
+    },
+    /// Print a compact summary of a validated v2 state.
+    InspectState {
+        #[arg(long)]
+        input: PathBuf,
+    },
+    /// Copy a validated v2 state to a new export file.
+    ExportState {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Migrate a v1 memory or registry graph JSON file into the unified v2 state.
     Migrate {
         #[arg(long)]
@@ -249,6 +271,54 @@ fn run() -> Result<(), Box<dyn Error>> {
                 envelope.state.assertions.len(),
                 output.display()
             );
+        }
+        Commands::InitState { output } => {
+            if output.exists() {
+                return Err(invalid_data(format!("state already exists: {}", output.display())).into());
+            }
+            let state = PortableStateV2::empty();
+            let json = state.to_json().map_err(invalid_data)?;
+            if let Some(parent) = output.parent() {
+                if !parent.as_os_str().is_empty() { fs::create_dir_all(parent)?; }
+            }
+            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&output)?;
+            use std::io::Write;
+            file.write_all(json.as_bytes())?;
+            println!("Initialised v{} state at {}", state.version, output.display());
+        }
+        Commands::ValidateState { input } => {
+            let raw = fs::read_to_string(&input)?;
+            let state = PortableStateV2::from_json(&raw).map_err(invalid_data)?;
+            println!("Valid v{} state: {} nodes, {} edges, {} learning records, {} publications, {} media manifests",
+                state.version, state.graph.nodes.len(), state.graph.edges.len(),
+                state.learning_records.len(), state.publications.len(), state.source_artifacts.len());
+        }
+        Commands::InspectState { input } => {
+            let raw = fs::read_to_string(&input)?;
+            let state = PortableStateV2::from_json(&raw).map_err(invalid_data)?;
+            println!("{}", serde_json::to_string_pretty(&serde_json::json!({
+                "format": state.format, "version": state.version, "manifest": state.manifest,
+                "nodes": state.graph.nodes.len(), "edges": state.graph.edges.len(),
+                "learning_records": state.learning_records.len(),
+                "publications": state.publications.len(), "evidence_claims": state.evidence_claims.len(),
+                "source_artifacts": state.source_artifacts.len(), "events": state.events.len(),
+                "embedding_profiles": state.embedding_profiles.len()
+            }))?);
+        }
+        Commands::ExportState { input, output } => {
+            if output.exists() {
+                return Err(invalid_data(format!("output already exists: {}", output.display())).into());
+            }
+            let raw = fs::read_to_string(&input)?;
+            let state = PortableStateV2::from_json(&raw).map_err(invalid_data)?;
+            let json = state.to_json().map_err(invalid_data)?;
+            if let Some(parent) = output.parent() {
+                if !parent.as_os_str().is_empty() { fs::create_dir_all(parent)?; }
+            }
+            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&output)?;
+            use std::io::Write;
+            file.write_all(json.as_bytes())?;
+            println!("Exported v{} portable state to {}", state.version, output.display());
         }
         Commands::Migrate { input, output } => {
             if output.exists() {
