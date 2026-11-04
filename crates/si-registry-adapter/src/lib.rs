@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, HashSet};
 use uuid::Uuid;
+use si_core::{PortableStateV2, Provenance, SourceArtifact};
+use chrono::{DateTime, Utc};
 
 pub const REGISTRY_EXPORT_FORMAT: &str = "surgical-registry-export";
 pub const REGISTRY_EXPORT_VERSION: u32 = 1;
@@ -313,6 +315,13 @@ fn validate_export(export: &RegistryExport) -> Result<(), String> {
                 ));
             }
         }
+        let mut asset_refs = HashSet::new();
+        for asset in &case.media_assets {
+            validate_media_asset(asset, &case.source_case_ref)?;
+            if !asset_refs.insert(&asset.asset_ref) {
+                return Err(format!("case {} has duplicate media asset refs", case.source_case_ref));
+            }
+        }
         for learning in &case.learnings {
             if !(1..=3).contains(&learning.ordinal) {
                 return Err(format!("case {} has an invalid learning ordinal", case.source_case_ref));
@@ -328,6 +337,74 @@ fn validate_export(export: &RegistryExport) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+
+fn validate_media_asset(asset: &RegistryMediaAsset, case_ref: &str) -> Result<(), String> {
+    if !asset.export_authorized { return Err(format!("media asset {} for case {} is not authorized", asset.asset_ref, case_ref)); }
+    if asset.asset_ref.trim().is_empty() || asset.storage_ref.trim().is_empty() {
+        return Err("media asset reference and storage_ref must be non-empty".into());
+    }
+    let path = std::path::Path::new(&asset.storage_ref);
+    if path.is_absolute() || path.components().any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir | std::path::Component::Prefix(_))) {
+        return Err(format!("media asset {} storage_ref must be a safe relative path", asset.asset_ref));
+    }
+    if asset.storage_ref.contains('?') || asset.storage_ref.contains('#') || asset.storage_ref.contains("://") {
+        return Err(format!("media asset {} storage_ref must not contain URL credentials/query data", asset.asset_ref));
+    }
+    if !matches!(asset.modality.as_str(), "image"|"video"|"audio"|"document"|"frame"|"clip") {
+        return Err(format!("media asset {} has unsupported modality", asset.asset_ref));
+    }
+    if asset.sha256.len()!=64 || !asset.sha256.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Err(format!("media asset {} has invalid SHA-256", asset.asset_ref));
+    }
+    if let (Some(a),Some(b)) = (asset.frame_start_ms, asset.frame_end_ms) {
+        if b<a { return Err(format!("media asset {} has invalid frame interval", asset.asset_ref)); }
+    }
+    if let Some(n) = asset.learning_ordinal { if !(1..=3).contains(&n) { return Err(format!("media asset {} has invalid learning ordinal", asset.asset_ref)); } }
+    if let Some(t) = &asset.captured_at { DateTime::parse_from_rfc3339(t).map_err(|e| format!("media asset {} invalid captured_at: {e}", asset.asset_ref))?; }
+    Ok(())
+}
+
+/// Convert approved media metadata to v2 source-artifact records. No bytes or secrets are copied.
+pub fn map_registry_media_assets(export: &RegistryExport, state: &mut PortableStateV2) -> Result<(), String> {
+    validate_export(export)?;
+    for case in &export.cases {
+        let episode_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, format!("surgical-registry:{}:episode", case.source_case_ref).as_bytes());
+        for asset in &case.media_assets {
+            validate_media_asset(asset, &case.source_case_ref)?;
+            let id = Uuid::new_v5(&Uuid::NAMESPACE_URL, format!("surgical-registry:{}:media:{}", case.source_case_ref, asset.asset_ref).as_bytes());
+            let observed_at = asset.captured_at.as_deref().unwrap_or(&export.exported_at);
+            let imported_at = DateTime::parse_from_rfc3339(&export.exported_at).map_err(|e| format!("invalid export timestamp: {e}"))?.with_timezone(&Utc);
+            let mut metadata = asset.metadata.clone();
+            metadata.insert("source_case_ref".into(), Value::String(case.source_case_ref.clone()));
+            if let Some(ordinal) = asset.learning_ordinal { metadata.insert("learning_ordinal".into(), Value::from(ordinal)); }
+            metadata.insert("captured_at".into(), Value::String(observed_at.into()));
+            state.source_artifacts.push(SourceArtifact {
+                id,
+                modality: asset.modality.clone(),
+                media_type: asset.media_type.clone(),
+                mime_type: asset.mime_type.clone(),
+                sha256: Some(asset.sha256.to_ascii_lowercase()),
+                byte_length: Some(asset.byte_length),
+                availability: "available".into(),
+                storage_ref: Some(asset.storage_ref.clone()),
+                source_node_id: Some(episode_id),
+                parent_artifact_id: None,
+                frame_start_ms: asset.frame_start_ms,
+                frame_end_ms: asset.frame_end_ms,
+                imported_at,
+                provenance: Provenance {
+                    source_type: "surgical_registry_media".into(),
+                    source_id: Some(asset.asset_ref.clone()),
+                    source_version: Some("registry-media-export-v1".into()),
+                    note: Some(format!("Approved media from pseudonymous case {}", case.source_case_ref)),
+                },
+                metadata,
+            });
+        }
+    }
+    state.validate()
 }
 
 /// Convert one already-authorized registry export to a portable graph envelope.
