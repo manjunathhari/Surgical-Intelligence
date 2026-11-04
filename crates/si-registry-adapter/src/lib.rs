@@ -348,7 +348,8 @@ fn validate_media_asset(asset: &RegistryMediaAsset, case_ref: &str) -> Result<()
         return Err("media asset reference and storage_ref must be non-empty".into());
     }
     let path = std::path::Path::new(&asset.storage_ref);
-    if asset.storage_ref.contains('\\\\') || asset.storage_ref.contains(':') || path.is_absolute() || path.components().any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir | std::path::Component::Prefix(_))) {
+    if asset.storage_ref.contains('\\') || asset.storage_ref.contains(':') || path.is_absolute()
+        || path.components().any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir | std::path::Component::Prefix(_))) {
         return Err(format!("media asset {} storage_ref must be a safe relative path", asset.asset_ref));
     }
     if asset.storage_ref.contains('?') || asset.storage_ref.contains('#') || asset.storage_ref.contains("://") {
