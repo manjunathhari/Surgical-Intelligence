@@ -2,7 +2,7 @@ use chrono::Utc;
 use clap::{Parser, Subcommand, ValueEnum};
 use si_registry_adapter::{map_registry_export, RegistryExport};
 use si_core::{
-    migrate_to_v2, PortableStateV2, Assertion, AssertionStatus, EpistemicStatus, MemoryState, PortableEnvelope, Provenance,
+    migrate_to_v2, LearningAmendment, LearningRecord, LearningSlot, PortableStateV2, Assertion, AssertionStatus, EpistemicStatus, MemoryState, PortableEnvelope, Provenance,
     RetentionClass,
 };
 use std::{
@@ -278,9 +278,60 @@ fn run() -> Result<(), Box<dyn Error>> {
             let registry_export: RegistryExport =
                 serde_json::from_str(&input_text).map_err(invalid_data)?;
             let graph = map_registry_export(&registry_export).map_err(invalid_data)?;
-            let state = PortableStateV2::from_graph_values(
+            let mut state = PortableStateV2::from_graph_values(
                 graph.graph.nodes, graph.graph.edges, "surgical-registry", &graph.exported_at
             ).map_err(invalid_data)?;
+            for case in &registry_export.cases {
+                let episode_id = Uuid::new_v5(
+                    &Uuid::NAMESPACE_URL,
+                    format!("surgical-registry:{}:episode", case.source_case_ref).as_bytes()
+                );
+                let sealed_at = case.learning_sealed_at.as_deref()
+                    .map(|value| chrono::DateTime::parse_from_rfc3339(value)
+                        .map(|dt| dt.with_timezone(&Utc))
+                        .map_err(|e| invalid_data(format!("invalid learning seal timestamp: {e}"))))
+                    .transpose()?;
+                for learning in &case.learnings {
+                    let id = Uuid::new_v5(
+                        &Uuid::NAMESPACE_URL,
+                        format!("surgical-registry:{}:learning:{}:record", case.source_case_ref, learning.ordinal).as_bytes()
+                    );
+                    let amendments = learning.amendments.iter().map(|amendment| {
+                        let amended_at = chrono::DateTime::parse_from_rfc3339(&amendment.created_at)
+                            .map(|dt| dt.with_timezone(&Utc))
+                            .map_err(|e| invalid_data(format!("invalid learning amendment timestamp: {e}")))?;
+                        Ok(LearningAmendment {
+                            slot: amendment.slot.clone(),
+                            text: amendment.text.clone(),
+                            amended_at,
+                        })
+                    }).collect::<Result<Vec<_>, io::Error>>()?;
+                    state.learning_records.push(LearningRecord {
+                        id,
+                        episode_node_id: Some(episode_id),
+                        source_case_ref: Some(case.source_case_ref.clone()),
+                        ordinal: learning.ordinal,
+                        shown_by: learning.shown_by.clone(),
+                        sign_tags: learning.sign_tags.clone(),
+                        how_showed: learning.how_showed.clone(),
+                        slots: learning.items.iter().map(|item| LearningSlot {
+                            name: item.slot.clone(),
+                            text: item.text.clone(),
+                            origin: item.origin.clone(),
+                        }).collect(),
+                        amendments,
+                        added_after_seal: learning.added_after_seal,
+                        sealed_at,
+                        provenance: si_core::Provenance {
+                            source_type: "surgical_registry_my_experience".into(),
+                            source_id: None,
+                            source_version: Some("postgres-case-values-learning-v1".into()),
+                            note: Some(format!("Pseudonymous case ref {}; learning ordinal {}", case.source_case_ref, learning.ordinal)),
+                        },
+                    });
+                }
+            }
+            state.validate().map_err(invalid_data)?;
             let json = state.to_json().map_err(invalid_data)?;
             if let Some(parent) = output.parent() {
                 if !parent.as_os_str().is_empty() {
