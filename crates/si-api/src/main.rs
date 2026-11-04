@@ -75,13 +75,13 @@ async fn main() {
 fn load_or_create(path: &PathBuf) -> Result<PortableStateV2, Box<dyn std::error::Error>> {
     if path.exists() {
         let raw = std::fs::read_to_string(path)?;
-        Ok(PortableStateV2::from_json(&raw)?)
+        Ok(PortableStateV2::from_json(&raw).map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?)
     } else {
         if let Some(parent) = path.parent() {
             if !parent.as_os_str().is_empty() { std::fs::create_dir_all(parent)?; }
         }
         let state = PortableStateV2::empty();
-        std::fs::write(path, state.to_json()?)?;
+        std::fs::write(path, state.to_json().map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?)?;
         Ok(state)
     }
 }
