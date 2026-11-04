@@ -324,6 +324,13 @@ fn validate_export(export: &RegistryExport) -> Result<(), String> {
                 return Err(format!("case {} has duplicate media asset refs", case.source_case_ref));
             }
         }
+        for asset in &case.media_assets {
+            if let Some(parent) = &asset.parent_asset_ref {
+                if parent == &asset.asset_ref || !asset_refs.contains(parent) {
+                    return Err(format!("media asset {} has invalid parent asset reference", asset.asset_ref));
+                }
+            }
+        }
         for learning in &case.learnings {
             if !(1..=3).contains(&learning.ordinal) {
                 return Err(format!("case {} has an invalid learning ordinal", case.source_case_ref));
@@ -377,6 +384,9 @@ pub fn map_registry_media_assets(export: &RegistryExport, state: &mut PortableSt
         for asset in &case.media_assets {
             validate_media_asset(asset, &case.source_case_ref)?;
             let id = Uuid::new_v5(&Uuid::NAMESPACE_URL, format!("surgical-registry:{}:media:{}", case.source_case_ref, asset.asset_ref).as_bytes());
+            let parent_artifact_id = asset.parent_asset_ref.as_ref().map(|parent| {
+                Uuid::new_v5(&Uuid::NAMESPACE_URL, format!("surgical-registry:{}:media:{}", case.source_case_ref, parent).as_bytes())
+            });
             let source_node_id = if let Some(ordinal) = asset.learning_ordinal {
                 if !case.learnings.iter().any(|learning| learning.ordinal == ordinal) {
                     return Err(format!("media asset {} references missing learning ordinal {}", asset.asset_ref, ordinal));
@@ -399,7 +409,7 @@ pub fn map_registry_media_assets(export: &RegistryExport, state: &mut PortableSt
                 availability: "available".into(),
                 storage_ref: Some(asset.storage_ref.clone()),
                 source_node_id: Some(source_node_id),
-                parent_artifact_id: None,
+                parent_artifact_id,
                 frame_start_ms: asset.frame_start_ms,
                 frame_end_ms: asset.frame_end_ms,
                 imported_at,
@@ -754,7 +764,7 @@ mod tests {
             }],
             tags: vec![RegistryTag { name:"difficult anatomy".into(), category:"anatomy_variant".into() }],
             media_assets: vec![RegistryMediaAsset {
-                asset_ref: "asset-1".into(), modality: "video".into(), media_type: Some("operative_clip".into()),
+                asset_ref: "asset-1".into(), parent_asset_ref: None, modality: "video".into(), media_type: Some("operative_clip".into()),
                 mime_type: Some("video/mp4".into()), sha256: "a".repeat(64), byte_length: 1234,
                 storage_ref: "media/case-1/clip-1.mp4".into(), learning_ordinal: Some(1),
                 frame_start_ms: Some(1000), frame_end_ms: Some(3000), captured_at: Some("2026-10-01T10:00:00Z".into()),
