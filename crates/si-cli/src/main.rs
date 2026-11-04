@@ -2,6 +2,7 @@ use chrono::Utc;
 use clap::{Parser, Subcommand, ValueEnum};
 use si_registry_adapter::{map_registry_export, map_registry_media_assets, RegistryExport};
 use si_publication_adapter::{map_publications, PublicationImport};
+use sha2::{Digest, Sha256};
 use si_core::{
     migrate_to_v2, LearningAmendment, LearningRecord, LearningSlot, PortableStateV2, Assertion, AssertionStatus, EpistemicStatus, MemoryState, PortableEnvelope, Provenance,
     RetentionClass,
@@ -112,6 +113,10 @@ enum Commands {
     },
     /// Import explicitly retained publications and structured evidence claims.
     ImportPublications { #[arg(long)] input: PathBuf, #[arg(long)] state: PathBuf, #[arg(long)] output: PathBuf },
+    /// Verify source artifact bytes in a portable bundle against declared size and SHA-256.
+    VerifyBundle { #[arg(long)] state: PathBuf, #[arg(long)] bundle_root: PathBuf },
+    /// Package all available source artifacts and the v2 state into a portable directory.
+    PackageBundle { #[arg(long)] state: PathBuf, #[arg(long)] source_root: PathBuf, #[arg(long)] output_root: PathBuf },
     /// Import a validated portable assertion-memory file as the target store.
     Import {
         #[arg(long)]
@@ -195,6 +200,15 @@ fn write_store(path: &Path, envelope: &PortableEnvelope) -> Result<(), Box<dyn E
         return Err(error.into());
     }
     Ok(())
+}
+
+fn safe_relative_path(raw: &str) -> Option<&Path> {
+    let path = Path::new(raw);
+    if raw.trim().is_empty() || raw.contains('\\') || raw.contains("://") || raw.contains('?') || raw.contains('#')
+        || raw.contains(':') || path.is_absolute()
+        || path.components().any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir | std::path::Component::Prefix(_))) {
+        None
+    } else { Some(path) }
 }
 
 fn run() -> Result<(), Box<dyn Error>> {
@@ -439,6 +453,48 @@ fn run() -> Result<(), Box<dyn Error>> {
             use std::io::Write;
             file.write_all(json.as_bytes())?;
             println!("Imported {} papers; state now contains {} evidence claims", import.papers.len(), state.evidence_claims.len());
+        }
+        Commands::VerifyBundle { state: state_path, bundle_root } => {
+            let raw = fs::read_to_string(&state_path)?;
+            let state = PortableStateV2::from_json(&raw).map_err(invalid_data)?;
+            let root = fs::canonicalize(&bundle_root)?;
+            let mut verified = 0usize;
+            for artifact in &state.source_artifacts {
+                if artifact.availability != "available" { continue; }
+                let rel = artifact.storage_ref.as_deref().ok_or_else(|| invalid_data(format!("available artifact {} has no storage_ref", artifact.id)))?;
+                let relative = safe_relative_path(rel).ok_or_else(|| invalid_data(format!("unsafe artifact path: {rel}")))?;
+                let canonical = fs::canonicalize(root.join(relative))?;
+                if !canonical.starts_with(&root) { return Err(invalid_data(format!("artifact escapes bundle root: {rel}")).into()); }
+                let bytes = fs::read(canonical)?;
+                if artifact.byte_length != Some(bytes.len() as u64) { return Err(invalid_data(format!("byte length mismatch for {}", artifact.id)).into()); }
+                let digest = hex::encode(Sha256::digest(&bytes));
+                if artifact.sha256.as_deref().map(|x| x.eq_ignore_ascii_case(&digest)) != Some(true) { return Err(invalid_data(format!("SHA-256 mismatch for {}", artifact.id)).into()); }
+                verified += 1;
+            }
+            println!("Verified {verified} available source artifacts");
+        }
+        Commands::PackageBundle { state: state_path, source_root, output_root } => {
+            if output_root.exists() { return Err(invalid_data(format!("bundle output already exists: {}", output_root.display())).into()); }
+            let raw = fs::read_to_string(&state_path)?;
+            let state = PortableStateV2::from_json(&raw).map_err(invalid_data)?;
+            let source = fs::canonicalize(&source_root)?;
+            fs::create_dir_all(&output_root)?;
+            for artifact in &state.source_artifacts {
+                if artifact.availability != "available" { continue; }
+                let rel = artifact.storage_ref.as_deref().ok_or_else(|| invalid_data(format!("available artifact {} has no storage_ref", artifact.id)))?;
+                let relative = safe_relative_path(rel).ok_or_else(|| invalid_data(format!("unsafe artifact path: {rel}")))?;
+                let src = fs::canonicalize(source.join(relative))?;
+                if !src.starts_with(&source) { return Err(invalid_data(format!("artifact escapes source root: {rel}")).into()); }
+                let bytes = fs::read(&src)?;
+                if artifact.byte_length != Some(bytes.len() as u64) { return Err(invalid_data(format!("byte length mismatch for {}", artifact.id)).into()); }
+                let digest = hex::encode(Sha256::digest(&bytes));
+                if artifact.sha256.as_deref().map(|x| x.eq_ignore_ascii_case(&digest)) != Some(true) { return Err(invalid_data(format!("SHA-256 mismatch for {}", artifact.id)).into()); }
+                let dest = output_root.join(relative);
+                if let Some(parent) = dest.parent() { fs::create_dir_all(parent)?; }
+                fs::write(dest, bytes)?;
+            }
+            fs::write(output_root.join("state-v2.json"), state.to_json().map_err(invalid_data)?)?;
+            println!("Packaged {} verified source artifacts in {}", state.source_artifacts.iter().filter(|a| a.availability == "available").count(), output_root.display());
         }
         Commands::Import { input, store } => {
             if store.exists() {
