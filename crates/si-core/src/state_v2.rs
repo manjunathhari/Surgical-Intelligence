@@ -374,9 +374,42 @@ mod tests {
     }
 
     #[test]
-    fn v2_round_trip_preserves_graph_and_media_manifest() {
+    fn v2_round_trip_preserves_graph_learning_publication_and_media_manifest() {
         let mut s=PortableStateV2::empty();
         let id=Uuid::new_v4(); s.graph.nodes.push(sample_node(id));
+        let learning_id = Uuid::new_v4();
+        s.learning_records.push(LearningRecord {
+            id: learning_id,
+            episode_node_id: Some(id),
+            source_case_ref: Some("sr-synthetic-case".into()),
+            ordinal: 1,
+            shown_by: "clip".into(),
+            sign_tags: vec!["difficult_anatomy".into()],
+            how_showed: Some("synthetic video".into()),
+            slots: vec![LearningSlot { name: "saw".into(), text: "Synthetic visual observation".into(), origin: "box".into() }],
+            amendments: vec![],
+            added_after_seal: false,
+            sealed_at: Some(Utc::now()),
+            provenance: Provenance { source_type: "synthetic_registry".into(), source_id: None, source_version: Some("v1".into()), note: None },
+        });
+        let publication_id = Uuid::new_v4();
+        s.publications.push(PublicationRecord {
+            id: publication_id, doi: Some("10.0000/synthetic".into()), pmid: None, pmcid: None,
+            title: "Synthetic surgical evidence paper".into(), authors: vec!["Synthetic Author".into()],
+            journal: None, publication_year: Some(2026), version: None, retention_state: "kept".into(),
+            retained_by: Some("synthetic-surgeon".into()), decision_at: Some(Utc::now()),
+            source_artifact_id: None,
+            provenance: Provenance { source_type: "synthetic_fixture".into(), source_id: None, source_version: None, note: None },
+        });
+        s.evidence_claims.push(EvidenceClaim {
+            id: Uuid::new_v4(), publication_id, claim: "Synthetic claim with traceable locator".into(),
+            locator: Some("Table 2".into()), population: Some("Synthetic cohort".into()),
+            intervention: Some("Synthetic intervention".into()), comparator: Some("Synthetic comparator".into()),
+            outcome: Some("Synthetic outcome".into()), effect_estimate: Some("RR 0.8".into()),
+            uncertainty: Some("95% CI 0.6–1.0".into()), limitations: vec!["Synthetic limitation".into()],
+            epistemic_status: "reported".into(), review_state: "not_reviewed".into(),
+            provenance: Provenance { source_type: "synthetic_paper".into(), source_id: None, source_version: None, note: None },
+        });
         s.source_artifacts.push(SourceArtifact{id:Uuid::new_v4(),modality:"video".into(),media_type:Some("operative_video".into()),mime_type:Some("video/mp4".into()),sha256:Some("a".repeat(64)),byte_length:Some(123),availability:"withheld".into(),storage_ref:None,source_node_id:Some(id),parent_artifact_id:None,frame_start_ms:Some(1000),frame_end_ms:Some(2500),imported_at:Utc::now(),provenance:Provenance{source_type:"synthetic".into(),source_id:None,source_version:None,note:None},metadata:BTreeMap::new()});
         let restored=PortableStateV2::from_json(&s.to_json().unwrap()).unwrap();
         assert_eq!(restored,s);
