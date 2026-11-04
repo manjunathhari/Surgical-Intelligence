@@ -285,7 +285,7 @@ impl PortableStateV2 {
             if artifact.availability == "available" {
                 let raw = artifact.storage_ref.as_deref().ok_or_else(|| format!("available artifact {} has no storage_ref", artifact.id))?;
                 let path = std::path::Path::new(raw);
-                if raw.trim().is_empty() || raw.contains('\\\\') || raw.contains("://") || raw.contains('?') || raw.contains('#')
+                if raw.trim().is_empty() || raw.contains('\\') || raw.contains("://") || raw.contains('?') || raw.contains('#')
                     || raw.contains(':') || path.is_absolute()
                     || path.components().any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir | std::path::Component::Prefix(_))) {
                     return Err(format!("available artifact {} has unsafe relative storage_ref", artifact.id));
