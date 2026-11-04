@@ -60,8 +60,7 @@
           "learning_answer",
           "learning_sealed_at",
           "learnings",
-          "tags",
-          "media_assets"
+          "tags"
         ],
         "properties": {
           "source_case_ref": {
