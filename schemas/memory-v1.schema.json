@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/manjunathhari/Surgical-Intelligence/schemas/memory-v1.schema.json",
+  "title": "Surgical Intelligence Portable Memory Envelope",
+  "type": "object",
+  "required": ["format", "version", "exported_at", "state"],
+  "properties": {
+    "format": { "const": "surgical-intelligence-memory" },
+    "version": { "const": 1 },
+    "exported_at": { "type": "string", "format": "date-time" },
+    "state": {
+      "type": "object",
+      "required": ["assertions", "events"],
+      "properties": {
+        "assertions": { "type": "object" },
+        "events": { "type": "array" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
