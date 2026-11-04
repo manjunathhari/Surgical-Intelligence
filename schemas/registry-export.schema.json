@@ -397,6 +397,13 @@
                 },
                 "metadata": {
                   "type": "object"
+                },
+                "parent_asset_ref": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1
                 }
               }
             }
