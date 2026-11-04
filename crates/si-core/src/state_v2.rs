@@ -282,6 +282,18 @@ impl PortableStateV2 {
             if !artifact_ids.insert(artifact.id) { return Err(format!("duplicate source artifact id {}", artifact.id)); }
             if !matches!(artifact.modality.as_str(), "image"|"video"|"audio"|"document"|"frame"|"clip"|"other") { return Err(format!("artifact {} has invalid modality", artifact.id)); }
             if !matches!(artifact.availability.as_str(), "available"|"withheld"|"external_reference"|"missing") { return Err(format!("artifact {} has invalid availability", artifact.id)); }
+            if artifact.availability == "available" {
+                let raw = artifact.storage_ref.as_deref().ok_or_else(|| format!("available artifact {} has no storage_ref", artifact.id))?;
+                let path = std::path::Path::new(raw);
+                if raw.trim().is_empty() || raw.contains('\\\\') || raw.contains("://") || raw.contains('?') || raw.contains('#')
+                    || raw.contains(':') || path.is_absolute()
+                    || path.components().any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir | std::path::Component::Prefix(_))) {
+                    return Err(format!("available artifact {} has unsafe relative storage_ref", artifact.id));
+                }
+                if artifact.byte_length.is_none() || artifact.sha256.is_none() {
+                    return Err(format!("available artifact {} requires byte_length and sha256", artifact.id));
+                }
+            }
             if let Some(hash) = &artifact.sha256 {
                 if hash.len()!=64 || !hash.bytes().all(|b| b.is_ascii_hexdigit()) { return Err(format!("artifact {} has invalid SHA-256 checksum", artifact.id)); }
             }
