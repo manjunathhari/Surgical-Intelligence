@@ -346,7 +346,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             }
             let input_text = fs::read_to_string(&input)?;
             let registry_export: RegistryExport =
-                serde_json::from_str(&input_text).map_err(invalid_data)?;
+                serde_json::from_str(&input_text).map_err(|error| invalid_data(error.to_string()))?;
             let graph = map_registry_export(&registry_export).map_err(invalid_data)?;
             let mut state = PortableStateV2::from_graph_values(
                 graph.graph.nodes, graph.graph.edges, "surgical-registry", &graph.exported_at
