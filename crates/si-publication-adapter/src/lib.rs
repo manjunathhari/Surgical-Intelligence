@@ -72,11 +72,11 @@ fn stable_id(key: &str) -> Uuid {
 fn safe_relative_path(raw: &str) -> bool {
     let path = std::path::Path::new(raw);
     !raw.trim().is_empty()
-        && !raw.contains('\\\\') && !raw.contains(':')\n        && !path.is_absolute()
+        && !raw.contains('\\') && !raw.contains(':')
+        && !path.is_absolute()
         && !path.components().any(|c| matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir | std::path::Component::Prefix(_)))
         && !raw.contains("://") && !raw.contains('?') && !raw.contains('#')
 }
-
 fn validate(input: &PublicationImport) -> Result<(), String> {
     if input.format != PUBLICATION_IMPORT_FORMAT || input.version != PUBLICATION_IMPORT_VERSION {
         return Err("unsupported publication import format/version".into());
