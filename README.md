@@ -79,7 +79,9 @@ pytest
 - [x] Preserve the v1 assertion-memory reader and add explicit v1 memory/legacy graph migration.
 - [x] Rust validation for graph references, identity, checksums, temporal ranges and source links.
 - [x] CLI migration and v2 registry import; JSON Schema and implementation documentation.
-- [ ] Full M1 acceptance: CI green, cross-platform round-trip fixtures, media bundle verification and first-class learning/media/publication import adapters.
+- [x] Registry media manifest adapter and retained-paper/publication claim importer.
+- [x] Portable media/document bundle packaging and actual byte-length/SHA-256 verification.
+- [ ] Final M1 acceptance: latest CI green and Windows/macOS round-trip fixtures; trusted exporter integration remains in the source registry.
 
 ### M2 — Memory learning and update engine
 - [ ] Append-only, idempotent event/update engine.
