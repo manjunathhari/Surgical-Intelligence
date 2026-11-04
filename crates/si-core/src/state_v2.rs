@@ -65,6 +65,56 @@ pub struct KnowledgeGraph {
     pub edges: Vec<GraphEdge>,
 }
 
+/// Original My Experience learning, preserving every labelled slot and amendment.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LearningRecord {
+    pub id: Uuid,
+    pub episode_node_id: Option<Uuid>,
+    pub source_case_ref: Option<String>,
+    pub ordinal: u8,
+    pub shown_by: String,
+    pub sign_tags: Vec<String>,
+    pub how_showed: Option<String>,
+    pub slots: Vec<LearningSlot>,
+    pub amendments: Vec<LearningAmendment>,
+    pub added_after_seal: bool,
+    pub sealed_at: Option<DateTime<Utc>>,
+    pub provenance: crate::Provenance,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LearningSlot {
+    pub name: String,
+    pub text: String,
+    pub origin: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LearningAmendment {
+    pub slot: String,
+    pub text: String,
+    pub amended_at: DateTime<Utc>,
+}
+
+/// A claim is not the paper itself and is not automatically endorsed.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct EvidenceClaim {
+    pub id: Uuid,
+    pub publication_id: Uuid,
+    pub claim: String,
+    pub locator: Option<String>,
+    pub population: Option<String>,
+    pub intervention: Option<String>,
+    pub comparator: Option<String>,
+    pub outcome: Option<String>,
+    pub effect_estimate: Option<String>,
+    pub uncertainty: Option<String>,
+    pub limitations: Vec<String>,
+    pub epistemic_status: String,
+    pub review_state: String,
+    pub provenance: crate::Provenance,
+}
+
 /// Manifest metadata only. Media bytes live in a separately governed object store/bundle.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SourceArtifact {
@@ -137,6 +187,10 @@ pub struct PortableStateV2 {
     pub source_artifacts: Vec<SourceArtifact>,
     #[serde(default)]
     pub publications: Vec<PublicationRecord>,
+    #[serde(default)]
+    pub learning_records: Vec<LearningRecord>,
+    #[serde(default)]
+    pub evidence_claims: Vec<EvidenceClaim>,
     /// Append-only domain events. Event payloads are versioned and validated by their owning subsystem.
     #[serde(default)]
     pub events: Vec<Value>,
@@ -161,6 +215,8 @@ impl PortableStateV2 {
             graph: KnowledgeGraph::default(),
             source_artifacts: Vec::new(),
             publications: Vec::new(),
+            learning_records: Vec::new(),
+            evidence_claims: Vec::new(),
             events: Vec::new(),
             embedding_profiles: Vec::new(),
             extensions: BTreeMap::new(),
@@ -236,12 +292,32 @@ impl PortableStateV2 {
         for artifact in &self.source_artifacts {
             if let Some(parent) = artifact.parent_artifact_id { if !artifact_ids.contains(&parent) { return Err(format!("artifact {} references missing parent artifact", artifact.id)); } }
         }
+        let mut learning_ids = HashSet::new();
+        for learning in &self.learning_records {
+            if !learning_ids.insert(learning.id) { return Err(format!("duplicate learning record id {}", learning.id)); }
+            if !(1..=3).contains(&learning.ordinal) { return Err(format!("learning {} has invalid ordinal", learning.id)); }
+            if learning.shown_by.trim().is_empty() { return Err(format!("learning {} has empty shown_by", learning.id)); }
+            if let Some(episode) = learning.episode_node_id { if !ids.contains(&episode) { return Err(format!("learning {} references missing episode", learning.id)); } }
+            let mut slot_names = HashSet::new();
+            for slot in &learning.slots {
+                if slot.name.trim().is_empty() || !slot_names.insert(&slot.name) { return Err(format!("learning {} has empty or duplicate slot names", learning.id)); }
+                if slot.origin.trim().is_empty() { return Err(format!("learning {} has empty slot origin", learning.id)); }
+            }
+            if learning.amendments.windows(2).any(|w| w[1].amended_at < w[0].amended_at) { return Err(format!("learning {} amendments are not chronological", learning.id)); }
+        }
         let mut publication_ids = HashSet::new();
         for paper in &self.publications {
             if !publication_ids.insert(paper.id) { return Err(format!("duplicate publication id {}", paper.id)); }
             if paper.title.trim().is_empty() { return Err(format!("publication {} has empty title", paper.id)); }
             if !matches!(paper.retention_state.as_str(), "kept"|"hidden"|"unreviewed") { return Err(format!("publication {} has invalid retention state", paper.id)); }
             if let Some(asset) = paper.source_artifact_id { if !artifact_ids.contains(&asset) { return Err(format!("publication {} references missing artifact", paper.id)); } }
+        }
+        let mut claim_ids = HashSet::new();
+        for claim in &self.evidence_claims {
+            if !claim_ids.insert(claim.id) { return Err(format!("duplicate evidence claim id {}", claim.id)); }
+            if !publication_ids.contains(&claim.publication_id) { return Err(format!("evidence claim {} references missing publication", claim.id)); }
+            if claim.claim.trim().is_empty() { return Err(format!("evidence claim {} has empty text", claim.id)); }
+            if !matches!(claim.epistemic_status.as_str(), "observed"|"reported"|"inferred"|"hypothesis") { return Err(format!("evidence claim {} has invalid epistemic status", claim.id)); }
         }
         let mut profile_ids = HashSet::new();
         for profile in &self.embedding_profiles {
