@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/manjunathhari/Surgical-Intelligence/blob/main/schemas/knowledge-graph.schema.json",
+  "title": "Surgical Intelligence Knowledge Graph",
+  "description": "Portable graph interchange contract. Additive to the existing assertion-memory envelope.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "exported_at", "graph"],
+  "properties": {
+    "format": {"const": "surgical-intelligence-knowledge-graph"},
+    "version": {"const": 1},
+    "exported_at": {"type": "string", "format": "date-time"},
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}},
+        "edges": {"type": "array", "items": {"$ref": "#/$defs/edge"}}
+      }
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object", "additionalProperties": false, "required": ["source_type"],
+      "properties": {
+        "source_type": {"type": "string", "minLength": 1},
+        "source_id": {"type": ["string", "null"]},
+        "source_version": {"type": ["string", "null"]},
+        "note": {"type": ["string", "null"]}
+      }
+    },
+    "temporal": {
+      "type": "object", "additionalProperties": false, "required": ["observed_at"],
+      "properties": {
+        "observed_at": {"type": "string", "format": "date-time"},
+        "valid_from": {"type": ["string", "null"], "format": "date-time"},
+        "valid_until": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "node": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "node_type", "knowledge_scope", "label", "epistemic_status", "lifecycle_status", "retention", "provenance", "temporal", "review", "data"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "node_type": {"enum": ["case_episode", "observation", "decision", "action", "complication_event", "outcome", "reflection", "evidence_claim", "procedure", "technique", "context_factor", "general_principle"]},
+        "knowledge_scope": {"enum": ["case_specific", "reusable_learning", "published_evidence", "reference_concept"]},
+        "label": {"type": "string", "minLength": 1},
+        "epistemic_status": {"enum": ["observed", "reported", "inferred", "hypothesis"]},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "lifecycle_status": {"enum": ["active", "superseded", "retracted", "disputed"]},
+        "retention": {"enum": ["durable", "episodic", "temporary"]},
+        "provenance": {"$ref": "#/$defs/provenance"},
+        "temporal": {"$ref": "#/$defs/temporal"},
+        "review": {
+          "type": "object", "additionalProperties": false, "required": ["state"],
+          "properties": {
+            "state": {"enum": ["not_required", "not_reviewed", "in_review", "approved", "rejected"]},
+            "reviewer_ref": {"type": ["string", "null"]},
+            "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
+            "rationale": {"type": ["string", "null"]}
+          }
+        },
+        "data": {"type": "object", "description": "Type-specific payload; must not contain direct patient identifiers."},
+        "tags": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "edge": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "from", "relation", "to", "epistemic_status", "lifecycle_status", "provenance", "observed_at"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "from": {"type": "string", "format": "uuid"},
+        "relation": {"enum": ["occurred_in", "observed_during", "observed_before", "motivated", "chosen_in_response_to", "performed_during", "responded_to", "resulted_in", "contributed_to", "derived_from", "supports", "contradicts", "supersedes", "applies_under", "not_applicable_under", "reviewed_as"]},
+        "to": {"type": "string", "format": "uuid"},
+        "epistemic_status": {"enum": ["observed", "reported", "inferred", "hypothesis"]},
+        "lifecycle_status": {"enum": ["active", "superseded", "retracted", "disputed"]},
+        "provenance": {"$ref": "#/$defs/provenance"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "note": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
