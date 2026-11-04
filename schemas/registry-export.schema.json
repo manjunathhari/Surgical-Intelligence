@@ -1,48 +1,409 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "title":"Surgical Registry De-identified Export","type":"object","additionalProperties":false,
-  "required":["format","version","exported_at","source","cases"],
-  "properties":{
-    "format":{"const":"surgical-registry-export"},"version":{"const":1},"exported_at":{"type":"string","format":"date-time"},
-    "source":{"type":"object","additionalProperties":false,"required":["system","schema_family"],"properties":{
-      "system":{"const":"surgical-registry"},"schema_family":{"const":"postgres-case-values-learning-v1"},"registry_version":{"type":["string","null"]}
-    }},
-    "cases":{"type":"array","items":{"type":"object","additionalProperties":false,"required":[
-      "source_case_ref","export_authorized","procedure_module","procedure_label","surgery_date","status","values","field_history",
-      "learning_answer","learning_sealed_at","learnings","tags"
-    ],"properties":{
-      "source_case_ref":{"type":"string","minLength":1,"description":"Keyed pseudonym, not source UUID or study ID"},
-      "surgeon_ref":{"type":["string","null"],"description":"Optional keyed pseudonym for surgeon of record"},
-      "export_authorized":{"type":"boolean","const":true},
-      "procedure_module":{"type":"string"},"procedure_label":{"type":["string","null"]},
-      "surgery_date":{"type":["string","null"],"format":"date"},
-      "status":{"enum":["captured","pending_review","complete"]},
-      "values":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["field","value"],"properties":{
-        "field":{"type":"string"},"value":{},"source":{"type":["string","null"]},
-        "evidence":{"type":["string","null"]},"changed_at":{"type":["string","null"],"format":"date-time"}
-      }}},
-      "field_history":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["field","value","source","changed_at"],"properties":{
-        "field":{"type":"string"},"value":{},"source":{"type":"string"},"evidence":{"type":["string","null"]},
-        "changed_at":{"type":"string","format":"date-time"},"actor_ref":{"type":["string","null"]}
-      }}},
-      "learning_answer":{"enum":["nothing","yes",null]},
-      "learning_sealed_at":{"type":["string","null"],"format":"date-time"},
-      "learnings":{"type":"array","items":{"type":"object","additionalProperties":false,"required":[
-        "ordinal","shown_by","sign_tags","items","amendments","added_after_seal"
-      ],"properties":{
-        "ordinal":{"type":"integer","minimum":1,"maximum":3},"shown_by":{"enum":["photo","clip","nothing"]},
-        "sign_tags":{"type":"array","items":{"type":"string"}},"how_showed":{"type":["string","null"]},
-        "items":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["slot","text","origin"],"properties":{
-          "slot":{"type":"string"},"text":{"type":"string"},"origin":{"enum":["own_words","box","asked"]}
-        }}},
-        "amendments":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["slot","text","created_at"],"properties":{
-          "slot":{"type":"string"},"text":{"type":"string"},"created_at":{"type":"string","format":"date-time"}
-        }}},
-        "added_after_seal":{"type":"boolean"}
-      }}},
-      "tags":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["name","category"],"properties":{
-        "name":{"type":"string"},"category":{"enum":["anatomy_variant","intraop_event","technique_modification","teaching_case","publishable"]}
-      }}}
-    }}}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Surgical Registry De-identified Export",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "exported_at",
+    "source",
+    "cases"
+  ],
+  "properties": {
+    "format": {
+      "const": "surgical-registry-export"
+    },
+    "version": {
+      "const": 1
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "system",
+        "schema_family"
+      ],
+      "properties": {
+        "system": {
+          "const": "surgical-registry"
+        },
+        "schema_family": {
+          "const": "postgres-case-values-learning-v1"
+        },
+        "registry_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_case_ref",
+          "export_authorized",
+          "procedure_module",
+          "procedure_label",
+          "surgery_date",
+          "status",
+          "values",
+          "field_history",
+          "learning_answer",
+          "learning_sealed_at",
+          "learnings",
+          "tags",
+          "media_assets"
+        ],
+        "properties": {
+          "source_case_ref": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Keyed pseudonym, not source UUID or study ID"
+          },
+          "surgeon_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional keyed pseudonym for surgeon of record"
+          },
+          "export_authorized": {
+            "type": "boolean",
+            "const": true
+          },
+          "procedure_module": {
+            "type": "string"
+          },
+          "procedure_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "surgery_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "status": {
+            "enum": [
+              "captured",
+              "pending_review",
+              "complete"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "field",
+                "value"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "value": {},
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "evidence": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "changed_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "field_history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "field",
+                "value",
+                "source",
+                "changed_at"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "value": {},
+                "source": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "changed_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "actor_ref": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "learning_answer": {
+            "enum": [
+              "nothing",
+              "yes",
+              null
+            ]
+          },
+          "learning_sealed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "learnings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ordinal",
+                "shown_by",
+                "sign_tags",
+                "items",
+                "amendments",
+                "added_after_seal"
+              ],
+              "properties": {
+                "ordinal": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3
+                },
+                "shown_by": {
+                  "enum": [
+                    "photo",
+                    "clip",
+                    "nothing"
+                  ]
+                },
+                "sign_tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "how_showed": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "slot",
+                      "text",
+                      "origin"
+                    ],
+                    "properties": {
+                      "slot": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      },
+                      "origin": {
+                        "enum": [
+                          "own_words",
+                          "box",
+                          "asked"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "amendments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "slot",
+                      "text",
+                      "created_at"
+                    ],
+                    "properties": {
+                      "slot": {
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                },
+                "added_after_seal": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "category"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "category": {
+                  "enum": [
+                    "anatomy_variant",
+                    "intraop_event",
+                    "technique_modification",
+                    "teaching_case",
+                    "publishable"
+                  ]
+                }
+              }
+            }
+          },
+          "media_assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "asset_ref",
+                "modality",
+                "sha256",
+                "byte_length",
+                "storage_ref",
+                "export_authorized"
+              ],
+              "properties": {
+                "asset_ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "modality": {
+                  "enum": [
+                    "image",
+                    "video",
+                    "audio",
+                    "document",
+                    "frame",
+                    "clip"
+                  ]
+                },
+                "media_type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mime_type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[A-Fa-f0-9]{64}$"
+                },
+                "byte_length": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "storage_ref": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*://)(?!.*[?#]).+$"
+                },
+                "learning_ordinal": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 3
+                },
+                "frame_start_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "frame_end_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "captured_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "export_authorized": {
+                  "const": true
+                },
+                "metadata": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
