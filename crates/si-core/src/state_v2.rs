@@ -351,7 +351,7 @@ pub fn migrate_memory_v1(input: &str) -> Result<PortableStateV2, String> {
             lifecycle_status: format!("{:?}", assertion.status).to_lowercase(),
             retention: format!("{:?}", assertion.retention).to_lowercase(),
             provenance: assertion.provenance.clone(),
-            temporal: Temporal { observed_at: assertion.observed_at.clone(), valid_from: assertion.valid_from.clone(), valid_until: assertion.valid_until.clone() },
+            temporal: Temporal { observed_at: assertion.observed_at, valid_from: assertion.valid_from, valid_until: assertion.valid_until },
             review: ReviewState { state: "not_required".into(), reviewer_ref: None, reviewed_at: None, rationale: None },
             data: serde_json::json!({"subject":assertion.subject,"predicate":assertion.predicate,"object":assertion.object,"statement":assertion.statement}),
             tags: assertion.tags.clone(),
