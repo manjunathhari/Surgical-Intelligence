@@ -5,148 +5,859 @@
   "description": "Canonical, model-independent surgical knowledge state. Embeddings are derived caches; source artifacts and provenance are canonical.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["format", "version", "manifest", "graph", "source_artifacts", "publications", "events", "embedding_profiles", "extensions"],
+  "required": [
+    "format",
+    "version",
+    "manifest",
+    "graph",
+    "source_artifacts",
+    "publications",
+    "learning_records",
+    "evidence_claims",
+    "events",
+    "embedding_profiles",
+    "extensions"
+  ],
   "properties": {
-    "format": {"const": "surgical-intelligence-state"},
-    "version": {"const": 2},
+    "format": {
+      "const": "surgical-intelligence-state"
+    },
+    "version": {
+      "const": 2
+    },
     "manifest": {
-      "type": "object", "additionalProperties": false,
-      "required": ["minimum_reader_version", "exporter_version", "created_at", "source_systems"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_reader_version",
+        "exporter_version",
+        "created_at",
+        "source_systems"
+      ],
       "properties": {
-        "minimum_reader_version": {"type": "string", "minLength": 1},
-        "exporter_version": {"type": "string", "minLength": 1},
-        "created_at": {"type": "string", "format": "date-time"},
-        "source_systems": {"type": "array", "items": {"type": "string"}}
+        "minimum_reader_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exporter_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_systems": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "graph": {
-      "type": "object", "additionalProperties": false, "required": ["nodes", "edges"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nodes",
+        "edges"
+      ],
       "properties": {
-        "nodes": {"type": "array", "items": {"$ref": "#/$defs/node"}},
-        "edges": {"type": "array", "items": {"$ref": "#/$defs/edge"}}
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/edge"
+          }
+        }
       }
     },
-    "source_artifacts": {"type": "array", "items": {"$ref": "#/$defs/sourceArtifact"}},
-    "publications": {"type": "array", "items": {"$ref": "#/$defs/publication"}},
-    "events": {"type": "array", "items": {"type": "object", "description": "Versioned append-only domain event; event schema is validated by its owning subsystem."}},
-    "embedding_profiles": {"type": "array", "items": {"$ref": "#/$defs/embeddingProfile"}},
-    "extensions": {"type": "object", "propertyNames": {"pattern": "^[a-z0-9][a-z0-9._-]*:[a-z0-9][a-z0-9._-]*$"}}
+    "source_artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sourceArtifact"
+      }
+    },
+    "publications": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/publication"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "Versioned append-only domain event; event schema is validated by its owning subsystem."
+      }
+    },
+    "embedding_profiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/embeddingProfile"
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9._-]*:[a-z0-9][a-z0-9._-]*$"
+      }
+    },
+    "learning_records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/learningRecord"
+      }
+    },
+    "evidence_claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidenceClaim"
+      }
+    }
   },
   "$defs": {
     "provenance": {
-      "type": "object", "additionalProperties": false,
-      "required": ["source_type", "source_id", "source_version", "note"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_type",
+        "source_id",
+        "source_version",
+        "note"
+      ],
       "properties": {
-        "source_type": {"type": "string", "minLength": 1},
-        "source_id": {"type": ["string", "null"]},
-        "source_version": {"type": ["string", "null"]},
-        "note": {"type": ["string", "null"]}
+        "source_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "node": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "node_type", "knowledge_scope", "label", "epistemic_status", "confidence", "lifecycle_status", "retention", "provenance", "temporal", "review", "data", "tags"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "node_type",
+        "knowledge_scope",
+        "label",
+        "epistemic_status",
+        "confidence",
+        "lifecycle_status",
+        "retention",
+        "provenance",
+        "temporal",
+        "review",
+        "data",
+        "tags"
+      ],
       "properties": {
-        "id": {"type": "string", "format": "uuid"},
-        "node_type": {"type": "string", "minLength": 1},
-        "knowledge_scope": {"type": "string", "minLength": 1},
-        "label": {"type": "string", "minLength": 1},
-        "epistemic_status": {"enum": ["observed", "reported", "inferred", "hypothesis"]},
-        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-        "lifecycle_status": {"enum": ["active", "superseded", "retracted", "disputed"]},
-        "retention": {"type": "string", "minLength": 1},
-        "provenance": {"$ref": "#/$defs/provenance"},
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "node_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "knowledge_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "epistemic_status": {
+          "enum": [
+            "observed",
+            "reported",
+            "inferred",
+            "hypothesis"
+          ]
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lifecycle_status": {
+          "enum": [
+            "active",
+            "superseded",
+            "retracted",
+            "disputed"
+          ]
+        },
+        "retention": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
         "temporal": {
-          "type": "object", "additionalProperties": false, "required": ["observed_at", "valid_from", "valid_until"],
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "observed_at",
+            "valid_from",
+            "valid_until"
+          ],
           "properties": {
-            "observed_at": {"type": "string", "format": "date-time"},
-            "valid_from": {"type": ["string", "null"], "format": "date-time"},
-            "valid_until": {"type": ["string", "null"], "format": "date-time"}
+            "observed_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "valid_from": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            },
+            "valid_until": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            }
           }
         },
         "review": {
-          "type": "object", "additionalProperties": false, "required": ["state", "reviewer_ref", "reviewed_at", "rationale"],
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "reviewer_ref",
+            "reviewed_at",
+            "rationale"
+          ],
           "properties": {
-            "state": {"type": "string", "minLength": 1},
-            "reviewer_ref": {"type": ["string", "null"]},
-            "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
-            "rationale": {"type": ["string", "null"]}
+            "state": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reviewer_ref": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reviewed_at": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time"
+            },
+            "rationale": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
           }
         },
-        "data": {"type": "object"},
-        "tags": {"type": "array", "items": {"type": "string"}}
+        "data": {
+          "type": "object"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "edge": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "from", "relation", "to", "epistemic_status", "lifecycle_status", "provenance", "observed_at", "confidence", "note"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "from",
+        "relation",
+        "to",
+        "epistemic_status",
+        "lifecycle_status",
+        "provenance",
+        "observed_at",
+        "confidence",
+        "note"
+      ],
       "properties": {
-        "id": {"type": "string", "format": "uuid"},
-        "from": {"type": "string", "format": "uuid"},
-        "relation": {"type": "string", "minLength": 1},
-        "to": {"type": "string", "format": "uuid"},
-        "epistemic_status": {"enum": ["observed", "reported", "inferred", "hypothesis"]},
-        "lifecycle_status": {"enum": ["active", "superseded", "retracted", "disputed"]},
-        "provenance": {"$ref": "#/$defs/provenance"},
-        "observed_at": {"type": "string", "format": "date-time"},
-        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-        "note": {"type": ["string", "null"]}
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "from": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "relation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "epistemic_status": {
+          "enum": [
+            "observed",
+            "reported",
+            "inferred",
+            "hypothesis"
+          ]
+        },
+        "lifecycle_status": {
+          "enum": [
+            "active",
+            "superseded",
+            "retracted",
+            "disputed"
+          ]
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "confidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "sourceArtifact": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "modality", "media_type", "mime_type", "sha256", "byte_length", "availability", "storage_ref", "source_node_id", "parent_artifact_id", "frame_start_ms", "frame_end_ms", "imported_at", "provenance", "metadata"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "modality",
+        "media_type",
+        "mime_type",
+        "sha256",
+        "byte_length",
+        "availability",
+        "storage_ref",
+        "source_node_id",
+        "parent_artifact_id",
+        "frame_start_ms",
+        "frame_end_ms",
+        "imported_at",
+        "provenance",
+        "metadata"
+      ],
       "properties": {
-        "id": {"type": "string", "format": "uuid"},
-        "modality": {"enum": ["image", "video", "audio", "document", "frame", "clip", "other"]},
-        "media_type": {"type": ["string", "null"]},
-        "mime_type": {"type": ["string", "null"]},
-        "sha256": {"type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$"},
-        "byte_length": {"type": ["integer", "null"], "minimum": 0},
-        "availability": {"enum": ["available", "withheld", "external_reference", "missing"]},
-        "storage_ref": {"type": ["string", "null"]},
-        "source_node_id": {"type": ["string", "null"], "format": "uuid"},
-        "parent_artifact_id": {"type": ["string", "null"], "format": "uuid"},
-        "frame_start_ms": {"type": ["integer", "null"], "minimum": 0},
-        "frame_end_ms": {"type": ["integer", "null"], "minimum": 0},
-        "imported_at": {"type": "string", "format": "date-time"},
-        "provenance": {"$ref": "#/$defs/provenance"},
-        "metadata": {"type": "object"}
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "modality": {
+          "enum": [
+            "image",
+            "video",
+            "audio",
+            "document",
+            "frame",
+            "clip",
+            "other"
+          ]
+        },
+        "media_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mime_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "byte_length": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "availability": {
+          "enum": [
+            "available",
+            "withheld",
+            "external_reference",
+            "missing"
+          ]
+        },
+        "storage_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_node_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "parent_artifact_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "frame_start_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "frame_end_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "imported_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "metadata": {
+          "type": "object"
+        }
       }
     },
     "publication": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "doi", "pmid", "pmcid", "title", "authors", "journal", "publication_year", "version", "retention_state", "retained_by", "decision_at", "source_artifact_id", "provenance"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "doi",
+        "pmid",
+        "pmcid",
+        "title",
+        "authors",
+        "journal",
+        "publication_year",
+        "version",
+        "retention_state",
+        "retained_by",
+        "decision_at",
+        "source_artifact_id",
+        "provenance"
+      ],
       "properties": {
-        "id": {"type": "string", "format": "uuid"},
-        "doi": {"type": ["string", "null"]},
-        "pmid": {"type": ["string", "null"]},
-        "pmcid": {"type": ["string", "null"]},
-        "title": {"type": "string", "minLength": 1},
-        "authors": {"type": "array", "items": {"type": "string"}},
-        "journal": {"type": ["string", "null"]},
-        "publication_year": {"type": ["integer", "null"]},
-        "version": {"type": ["string", "null"]},
-        "retention_state": {"enum": ["kept", "hidden", "unreviewed"]},
-        "retained_by": {"type": ["string", "null"]},
-        "decision_at": {"type": ["string", "null"], "format": "date-time"},
-        "source_artifact_id": {"type": ["string", "null"], "format": "uuid"},
-        "provenance": {"$ref": "#/$defs/provenance"}
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "doi": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pmid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pmcid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "journal": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "publication_year": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retention_state": {
+          "enum": [
+            "kept",
+            "hidden",
+            "unreviewed"
+          ]
+        },
+        "retained_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "decision_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "source_artifact_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
       }
     },
     "embeddingProfile": {
-      "type": "object", "additionalProperties": false,
-      "required": ["id", "modality", "provider", "model", "model_revision", "dimensions", "normalization", "preprocessing_version", "derived_cache"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "modality",
+        "provider",
+        "model",
+        "model_revision",
+        "dimensions",
+        "normalization",
+        "preprocessing_version",
+        "derived_cache"
+      ],
       "properties": {
-        "id": {"type": "string", "minLength": 1},
-        "modality": {"type": "string", "minLength": 1},
-        "provider": {"type": "string", "minLength": 1},
-        "model": {"type": "string", "minLength": 1},
-        "model_revision": {"type": ["string", "null"]},
-        "dimensions": {"type": "integer", "minimum": 1},
-        "normalization": {"type": ["string", "null"]},
-        "preprocessing_version": {"type": "string", "minLength": 1},
-        "derived_cache": {"const": true}
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "modality": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model_revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dimensions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "normalization": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "preprocessing_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "derived_cache": {
+          "const": true
+        }
+      }
+    },
+    "learningRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "episode_node_id",
+        "source_case_ref",
+        "ordinal",
+        "shown_by",
+        "sign_tags",
+        "how_showed",
+        "slots",
+        "amendments",
+        "added_after_seal",
+        "sealed_at",
+        "provenance"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "episode_node_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "source_case_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "shown_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sign_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "how_showed": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "text",
+              "origin"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string"
+              },
+              "origin": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "amendments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "slot",
+              "text",
+              "amended_at"
+            ],
+            "properties": {
+              "slot": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string"
+              },
+              "amended_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        "added_after_seal": {
+          "type": "boolean"
+        },
+        "sealed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "evidenceClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "publication_id",
+        "claim",
+        "locator",
+        "population",
+        "intervention",
+        "comparator",
+        "outcome",
+        "effect_estimate",
+        "uncertainty",
+        "limitations",
+        "epistemic_status",
+        "review_state",
+        "provenance"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "publication_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "claim": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "population": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "intervention": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "comparator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "outcome": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "effect_estimate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "uncertainty": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "epistemic_status": {
+          "enum": [
+            "observed",
+            "reported",
+            "inferred",
+            "hypothesis"
+          ]
+        },
+        "review_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
       }
     }
   }
