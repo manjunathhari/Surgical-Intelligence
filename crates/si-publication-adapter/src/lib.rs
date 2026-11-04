@@ -125,7 +125,7 @@ pub fn map_publications(input: &PublicationImport, state: &mut PortableStateV2) 
         };
         if let Some(file) = &paper.file {
             state.source_artifacts.push(SourceArtifact {
-                id: artifact_id.expect("file implies artifact id"),
+                id: artifact_id.ok_or_else(|| "retained file has no artifact id".to_string())?,
                 modality: "document".into(),
                 media_type: Some("publication_full_text".into()),
                 mime_type: Some(file.mime_type.clone()),
