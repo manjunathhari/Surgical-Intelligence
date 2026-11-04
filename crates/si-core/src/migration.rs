@@ -35,6 +35,17 @@ mod tests {
     }
 
     #[test]
+    fn migrates_legacy_registry_graph_envelope() {
+        let input = r#"{"format":"surgical-intelligence-knowledge-graph","version":1,"exported_at":"2026-11-04T00:00:00Z","graph":{"nodes":[],"edges":[]}}"#;
+        let migrated = migrate_to_v2(input).unwrap();
+        assert_eq!(migrated.version, 2);
+        assert_eq!(
+            migrated.manifest.source_systems,
+            vec!["surgical-intelligence-knowledge-graph-v1"]
+        );
+    }
+
+    #[test]
     fn rejects_unknown_legacy_graph_version() {
         let input = r#"{"format":"surgical-intelligence-knowledge-graph","version":9,"exported_at":"2026-11-04T00:00:00Z","graph":{"nodes":[],"edges":[]}}"#;
         assert!(migrate_to_v2(input).is_err());
