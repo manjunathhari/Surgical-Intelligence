@@ -1,0 +1,15 @@
+[package]
+name = "si-publication-adapter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Offline importer for retained publications and traceable evidence claims"
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+hex = "0.4"
+uuid = { version = "1", features = ["serde", "v5"] }
+si-core = { path = "../si-core" }
