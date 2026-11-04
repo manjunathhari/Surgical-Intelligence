@@ -2,7 +2,7 @@ use chrono::Utc;
 use clap::{Parser, Subcommand, ValueEnum};
 use si_registry_adapter::{map_registry_export, RegistryExport};
 use si_core::{
-    Assertion, AssertionStatus, EpistemicStatus, MemoryState, PortableEnvelope, Provenance,
+    migrate_to_v2, PortableStateV2, Assertion, AssertionStatus, EpistemicStatus, MemoryState, PortableEnvelope, Provenance,
     RetentionClass,
 };
 use std::{
@@ -73,7 +73,14 @@ enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
-    /// Import a de-identified Surgical Registry export as a portable knowledge graph.
+    /// Migrate a v1 memory or registry graph JSON file into the unified v2 state.
+    Migrate {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Import a de-identified Surgical Registry export as a unified v2 portable state.
     ImportRegistry {
         #[arg(long)]
         input: PathBuf,
@@ -243,6 +250,23 @@ fn run() -> Result<(), Box<dyn Error>> {
                 output.display()
             );
         }
+        Commands::Migrate { input, output } => {
+            if output.exists() {
+                return Err(invalid_data(format!("output already exists: {}", output.display())).into());
+            }
+            let input_text = fs::read_to_string(&input)?;
+            let state = migrate_to_v2(&input_text).map_err(invalid_data)?;
+            let json = state.to_json().map_err(invalid_data)?;
+            if let Some(parent) = output.parent() {
+                if !parent.as_os_str().is_empty() { fs::create_dir_all(parent)?; }
+            }
+            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&output)?;
+            use std::io::Write;
+            file.write_all(json.as_bytes())?;
+            println!("Migrated to v{}: {} nodes, {} edges, {} source artifacts, {} publications",
+                state.version, state.graph.nodes.len(), state.graph.edges.len(),
+                state.source_artifacts.len(), state.publications.len());
+        }
         Commands::ImportRegistry { input, output } => {
             if output.exists() {
                 return Err(invalid_data(format!(
@@ -254,7 +278,10 @@ fn run() -> Result<(), Box<dyn Error>> {
             let registry_export: RegistryExport =
                 serde_json::from_str(&input_text).map_err(invalid_data)?;
             let graph = map_registry_export(&registry_export).map_err(invalid_data)?;
-            let json = serde_json::to_string_pretty(&graph)?;
+            let state = PortableStateV2::from_graph_values(
+                graph.graph.nodes, graph.graph.edges, "surgical-registry", &graph.exported_at
+            ).map_err(invalid_data)?;
+            let json = state.to_json().map_err(invalid_data)?;
             if let Some(parent) = output.parent() {
                 if !parent.as_os_str().is_empty() {
                     fs::create_dir_all(parent)?;
@@ -269,8 +296,8 @@ fn run() -> Result<(), Box<dyn Error>> {
             println!(
                 "Imported {} registry cases as {} graph nodes and {} edges to {}",
                 registry_export.cases.len(),
-                graph.graph.nodes.len(),
-                graph.graph.edges.len(),
+                state.graph.nodes.len(),
+                state.graph.edges.len(),
                 output.display()
             );
         }
