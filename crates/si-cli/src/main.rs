@@ -1,6 +1,7 @@
 use chrono::Utc;
 use clap::{Parser, Subcommand, ValueEnum};
 use si_registry_adapter::{map_registry_export, map_registry_media_assets, RegistryExport};
+use si_publication_adapter::{map_publications, PublicationImport};
 use si_core::{
     migrate_to_v2, LearningAmendment, LearningRecord, LearningSlot, PortableStateV2, Assertion, AssertionStatus, EpistemicStatus, MemoryState, PortableEnvelope, Provenance,
     RetentionClass,
@@ -109,6 +110,8 @@ enum Commands {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Import explicitly retained publications and structured evidence claims.
+    ImportPublications { #[arg(long)] input: PathBuf, #[arg(long)] state: PathBuf, #[arg(long)] output: PathBuf },
     /// Import a validated portable assertion-memory file as the target store.
     Import {
         #[arg(long)]
@@ -422,6 +425,20 @@ fn run() -> Result<(), Box<dyn Error>> {
                 state.graph.edges.len(),
                 output.display()
             );
+        }
+        Commands::ImportPublications { input, state: state_path, output } => {
+            if output.exists() { return Err(invalid_data(format!("output already exists: {}", output.display())).into()); }
+            let raw_state = fs::read_to_string(&state_path)?;
+            let mut state = PortableStateV2::from_json(&raw_state).map_err(invalid_data)?;
+            let raw_import = fs::read_to_string(&input)?;
+            let import: PublicationImport = serde_json::from_str(&raw_import).map_err(|e| invalid_data(e.to_string()))?;
+            map_publications(&import, &mut state).map_err(invalid_data)?;
+            let json = state.to_json().map_err(invalid_data)?;
+            if let Some(parent) = output.parent() { if !parent.as_os_str().is_empty() { fs::create_dir_all(parent)?; } }
+            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&output)?;
+            use std::io::Write;
+            file.write_all(json.as_bytes())?;
+            println!("Imported {} papers; state now contains {} evidence claims", import.papers.len(), state.evidence_claims.len());
         }
         Commands::Import { input, store } => {
             if store.exists() {
