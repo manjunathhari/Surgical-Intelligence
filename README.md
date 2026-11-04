@@ -98,6 +98,22 @@ The registry remains a separate system of record. Surgical Intelligence should c
 
 See [Architecture](docs/ARCHITECTURE.md), [Memory model](docs/MEMORY_MODEL.md), [Knowledge graph](docs/KNOWLEDGE_GRAPH.md), [Portability](docs/PORTABILITY.md), [CLI usage](docs/CLI.md), and [Safety & Privacy](docs/SAFETY_AND_PRIVACY.md).
 
+## Local web workbench
+
+A local React + TypeScript interface is available in `web/`, backed by the Rust `si-api` crate and the existing `si-core` portable state model. It binds to loopback only and validates state through the core before saving.
+
+```bash
+# Terminal 1 — Rust API
+cargo run -p si-api
+
+# Terminal 2 — browser UI
+cd web
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. See [web workbench instructions](web/README.md).
+
 ## Local CLI
 
 The first terminal interface is available through the `si` binary:
