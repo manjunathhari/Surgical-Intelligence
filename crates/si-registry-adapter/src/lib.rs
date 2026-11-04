@@ -52,6 +52,8 @@ pub struct RegistryCase {
     pub learning_sealed_at: Option<String>,
     pub learnings: Vec<RegistryLearning>,
     pub tags: Vec<RegistryTag>,
+    #[serde(default)]
+    pub media_assets: Vec<RegistryMediaAsset>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -743,7 +745,14 @@ mod tests {
                 ],
                 amendments: vec![], added_after_seal: false
             }],
-            tags: vec![RegistryTag { name:"difficult anatomy".into(), category:"anatomy_variant".into() }]
+            tags: vec![RegistryTag { name:"difficult anatomy".into(), category:"anatomy_variant".into() }],
+            media_assets: vec![RegistryMediaAsset {
+                asset_ref: "asset-1".into(), modality: "video".into(), media_type: Some("operative_clip".into()),
+                mime_type: Some("video/mp4".into()), sha256: "a".repeat(64), byte_length: 1234,
+                storage_ref: "media/case-1/clip-1.mp4".into(), learning_ordinal: Some(1),
+                frame_start_ms: Some(1000), frame_end_ms: Some(3000), captured_at: Some("2026-10-01T10:00:00Z".into()),
+                export_authorized: true, metadata: BTreeMap::new()
+            }]
         }
     }
 
@@ -768,6 +777,27 @@ mod tests {
         assert!(graph.graph.nodes.iter().any(|n| n["node_type"]=="observation" && n["data"]["slot"]=="saw"));
         assert!(graph.graph.nodes.iter().any(|n| n["node_type"]=="action" && n["data"]["slot"]=="did"));
         assert!(graph.graph.nodes.iter().any(|n| n["node_type"]=="outcome"));
+    }
+
+    #[test]
+    fn maps_authorized_media_manifest_to_v2_with_case_lineage() {
+        let e=export(fixture());
+        let graph=map_registry_export(&e).unwrap();
+        let mut state=PortableStateV2::from_graph_values(graph.graph.nodes,graph.graph.edges,"surgical-registry",&graph.exported_at).unwrap();
+        map_registry_media_assets(&e,&mut state).unwrap();
+        assert_eq!(state.source_artifacts.len(),1);
+        assert_eq!(state.source_artifacts[0].modality,"video");
+        assert!(state.source_artifacts[0].storage_ref.as_deref().unwrap().starts_with("media/"));
+    }
+
+    #[test]
+    fn rejects_unsafe_media_paths_and_unauthorized_media() {
+        let mut e=export(fixture());
+        e.cases[0].media_assets[0].storage_ref="../secret.mp4".into();
+        assert!(map_registry_export(&e).is_err());
+        e.cases[0].media_assets[0].storage_ref="media/clip.mp4".into();
+        e.cases[0].media_assets[0].export_authorized=false;
+        assert!(map_registry_export(&e).is_err());
     }
 
     #[test]
