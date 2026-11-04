@@ -80,15 +80,11 @@ The implementation at commit `1d1cacea4289448994d3b075d7f767006fc5887f` passed t
 
 Run: https://github.com/manjunathhari/Surgical-Intelligence/actions/runs/41876115243
 
-## Remaining integration work before calling the entire M1 milestone closed
+## Remaining source-system boundary
 
-The portable schema, core types, migration path, CLI and validation tests are implemented. The remaining work is at the source-ingestion boundary:
-- Implement and review the registry-side authorized exporter, including actual image/video asset references and privacy/de-identification checks.
-- Add the retained-paper ingestion adapter that populates publication records and evidence claims from the user's saved papers.
-- Implement media bundle transport and verify actual bytes against manifest checksums (the current v2 validator checks checksum syntax and manifest references).
-- Add cross-platform fixture runs on Windows/macOS in addition to the Linux CI runner.
-
-These are deliberately not faked by the core: the registry remains the system of record, and patient media must not be exported until its purpose authorization and privacy workflow is in place.
+- The trusted exporter in the source Surgical Registry must now emit `media_assets` only after its own purpose authorization, consent and de-identification controls. The importer and contract are implemented here; this repository intentionally does not connect to the registry database.
+- The user's retained paper library must emit the documented publication-import JSON. This repository imports that format and does not fetch publisher content or infer evidence claims.
+- Cross-platform fixture runs on Windows/macOS remain desirable in addition to Linux CI.
 
 
 ## Source adapter completion
